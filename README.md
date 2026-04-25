@@ -77,17 +77,43 @@ Prioritas pertanyaan:
 * Hasil & kesimpulan
 
 ---
+## AI Features
 
-## Modes
+### 1. Conversational AI (Chatbot Dosen)
+AI bertindak sebagai dosen penguji yang kritical dan membimbing. 
+- **Teknologi**: LLM (GPT-4o) + RAG (Retrieval-Augmented Generation)
+- **Fitur**: 
+  - Memahami konteks dokumen skripsi
+  - Mengajukan pertanyaan spesifik berdasarkan konten
+  - Menggali lebih dalam jika jawaban user lemah
+  - Memberikan feedback yang konstruktif
 
-### Simulation Mode
-* Chat interaktif
+### 2. Document Understanding & RAG
+AI membaca dan memahami dokumen skripsi secara mendalam.
+- **Teknologi**: LangChain + pgvector embeddings + OpenAI
+- **Proses**:
+  - Parse PDF/PPT → Extract teks
+  - Split teks menjadi chunks (1000 chars, overlap 200)
+  - Generate vector embeddings untuk setiap chunk
+  - Similarity search untuk retrieve konteks relevan saat AI menjawab
 
-### Analysis Mode
-* Evaluasi dokumen + skor
+### 3. Automated Analysis & Scoring
+AI menganalisis skripsi secara otomatis dan memberikan skor.
+- **Teknologi**: Structured output (Pydantic) + LLM analysis
+- **Output**:
+  - Skor per-aspek (0-100): latar belakang, rumusan masalah, metodologi, analisis, konsistensi, kesimpulan, referensi
+  - Skor keseluruhan
+  - Kelemahan utama (bullet points)
+  - Potensi pertanyaan sidang
+  - Saran perbaikan spesifik
+
+### 4. AI-Text Detection (Optional)
+Cek estimasi persentase teks yang ditulis oleh AI di setiap bab.
+- **Teknologi**: AI text detection model
+- **Output**: Persentase estimasi AI-generated text per bab
+- **Catatan**: Estimasi kasar, bukan setara Turnitin
 
 ---
-
 ## MVP Goal
 * Upload file
 * Simulasi sidang sederhana
