@@ -1,10 +1,29 @@
-.github/
+# Dependencies
+node_modules/
+**/node_modules/
 
-docs/
+# Build outputs
+.next/
+**/.next/
+build/
+out/
+dist/
 
+# Environment
+.env
+.env.local
+.env.*.local
+
+# System
+.DS_Store
+*.log
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Database
 database/
 !/backend/database/
 /database/*.sqlite
-
-venv/
-.env
