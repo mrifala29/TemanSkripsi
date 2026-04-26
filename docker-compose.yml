@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # ================================
+  # Next.js Frontend (Port 3000)
+  # ================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: temanskripsi-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_KEY}
+    depends_on:
+      - backend
+    networks:
+      - temanskripsi
+
+  # ================================
+  # Laravel Backend API (Port 8000)
+  # ================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: temanskripsi-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - ai-service
+    networks:
+      - temanskripsi
+
+  # ================================
+  # Python FastAPI AI Service (Port 8001)
+  # ================================
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: temanskripsi-ai
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ai-service:/app
+    env_file:
+      - ./.env
+    networks:
+      - temanskripsi
+
+networks:
+  temanskripsi:
+    driver: bridge
