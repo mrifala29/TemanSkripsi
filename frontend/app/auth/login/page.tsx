@@ -25,7 +25,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-white flex flex-col items-center justify-center px-4 py-8 md:py-12">
+    <div className="relative min-h-screen bg-white flex items-center justify-center">
       {/* Constellation SVG background */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
@@ -49,87 +49,96 @@ export default function LoginPage() {
         <circle cx="88%" cy="70%" r="2.5" fill="rgba(99,102,241,0.10)" />
       </svg>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="relative z-10 w-full max-w-md"
-      >
-        {/* Mascot - top center */}
-        <div className="flex justify-center mb-6 md:mb-8">
+      <div className="relative z-10 w-full flex items-center justify-center px-4 py-8">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-24 max-w-5xl">
+          {/* Form - Left side */}
           <motion.div
-            animate={{ y: [0, -12, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-24 md:w-32"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex-1 w-full max-w-sm"
           >
-            <Image src="/mascot.png" alt="Maskot" width={128} height={128} className="w-full" />
+            {/* Logo */}
+            <div className="text-center mb-8">
+              <Link href="/" className="inline-flex items-center gap-2">
+                <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-extrabold text-base">T</div>
+                <span className="font-bold text-gray-900 text-xl">TemanSkripsi</span>
+              </Link>
+            </div>
+
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-2 text-center">Masuk ke akun</h1>
+            <p className="text-gray-500 text-sm mb-8 text-center">
+              Belum punya akun?{' '}
+              <Link href="/auth/register" className="text-indigo-600 font-semibold hover:underline">Daftar gratis</Link>
+            </p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="kamu@email.com"
+                  className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Minimal 8 karakter"
+                  className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
+                />
+              </div>
+
+              {error && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5">{error}</p>
+              )}
+
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2 text-gray-500 cursor-pointer">
+                  <input type="checkbox" className="rounded border-gray-300 text-indigo-600" />
+                  Ingat saya
+                </label>
+                <a href="#" className="text-indigo-600 hover:underline font-medium">Lupa password?</a>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold py-3 rounded-lg transition-all hover:scale-[1.01] shadow-md shadow-indigo-200"
+              >
+                {loading ? 'Masuk...' : 'Masuk →'}
+              </button>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <p className="text-xs text-gray-400 text-center">
+                Dengan masuk, kamu menyetujui{' '}
+                <a href="#" className="underline hover:text-gray-600">Syarat & Ketentuan</a> TemanSkripsi.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Mascot - Right side */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="hidden lg:flex flex-shrink-0 w-56 lg:w-64"
+          >
+            <motion.div
+              animate={{ y: [0, -18, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <Image src="/mascot.png" alt="Maskot" width={280} height={280} className="w-full drop-shadow-2xl" />
+            </motion.div>
           </motion.div>
         </div>
-
-        {/* Logo */}
-        <div className="text-center mb-6 md:mb-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-8 md:w-9 h-8 md:h-9 bg-indigo-600 rounded-lg md:rounded-xl flex items-center justify-center text-white font-extrabold text-sm md:text-base">T</div>
-            <span className="font-bold text-gray-900 text-lg md:text-xl">TemanSkripsi</span>
-          </Link>
-        </div>
-
-        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2 text-center">Masuk ke akun</h1>
-        <p className="text-gray-500 text-xs md:text-sm mb-6 md:mb-8 text-center">
-          Belum punya akun?{' '}
-          <Link href="/auth/register" className="text-indigo-600 font-semibold hover:underline">Daftar gratis</Link>
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
-          <div>
-            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-1.5">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="kamu@email.com"
-              className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg md:rounded-xl px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-1.5">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Minimal 8 karakter"
-              className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg md:rounded-xl px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
-            />
-          </div>
-
-          {error && (
-            <p className="text-xs md:text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 md:px-4 py-2 md:py-2.5">{error}</p>
-          )}
-
-          <div className="flex items-center justify-between text-xs md:text-sm">
-            <label className="flex items-center gap-2 text-gray-500 cursor-pointer">
-              <input type="checkbox" className="rounded border-gray-300 text-indigo-600" />
-              Ingat saya
-            </label>
-            <a href="#" className="text-indigo-600 hover:underline font-medium">Lupa password?</a>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold py-2.5 md:py-3 rounded-lg md:rounded-xl transition-all hover:scale-[1.01] shadow-md shadow-indigo-200 text-sm md:text-base"
-          >
-            {loading ? 'Masuk...' : 'Masuk →'}
-          </button>
-        </form>
-
-        <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-100">
-          <p className="text-[10px] md:text-xs text-gray-400 text-center">
-            Dengan masuk, kamu menyetujui{' '}
-            <a href="#" className="underline hover:text-gray-600">Syarat & Ketentuan</a> TemanSkripsi.
-          </p>
-        </div>
-      </motion.div>
+      </div>
     </div>
   )
 }

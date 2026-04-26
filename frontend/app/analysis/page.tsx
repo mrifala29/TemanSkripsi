@@ -97,7 +97,40 @@ function AnalysisLanding() {
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Contoh Hasil Analisa</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Dokumenmu</h2>
+            <p className="text-gray-400 text-sm">Dapatkan laporan analisa dalam hitungan menit</p>
+          </div>
+
+          {/* Upload Form */}
+          <form className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Upload Dokumen Skripsi</label>
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-emerald-300 transition-colors">
+              <div className="text-3xl mb-2">📄</div>
+              <p className="text-sm text-gray-500 mb-4">PDF atau PPTX — maks. 20 MB</p>
+              <label
+                htmlFor="file-upload-analysis"
+                className="cursor-pointer inline-block bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
+              >
+                Pilih File
+              </label>
+              <input
+                type="file"
+                id="file-upload-analysis"
+                accept=".pdf,.ppt,.pptx"
+                className="hidden"
+              />
+            </div>
+            <button
+              type="submit"
+              className="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white text-base font-semibold py-3 rounded-xl transition-colors"
+            >
+              Analisa Sekarang
+            </button>
+          </form>
+
+          {/* Results Demo */}
+          <div className="text-center mb-10">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Contoh Hasil Analisa</h3>
             <p className="text-gray-400 text-sm">Skor per aspek dan feedback detail seperti ini</p>
           </div>
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
