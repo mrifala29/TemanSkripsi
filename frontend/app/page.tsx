@@ -260,12 +260,12 @@ export default function Home() {
             transition={{ delay: 0.4 }}
             className="flex flex-col sm:flex-row gap-3 justify-center"
           >
-            <a
-              href="#pricing"
+            <Link
+              href="/pricing"
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-semibold text-base transition-all duration-200 hover:scale-105 shadow-md shadow-indigo-200"
             >
               🚀 Mulai Sekarang
-            </a>
+            </Link>
             <a
               href="#fitur"
               className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-8 py-3.5 rounded-xl font-medium text-base transition-all duration-200"
@@ -283,114 +283,6 @@ export default function Home() {
             {['✓ Hasil instan', '✓ Laporan detail', '✓ Akses 24/7'].map((t, i) => (
               <span key={i} className="text-xs text-gray-400 font-medium">{t}</span>
             ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── PRICING ── */}
-      <section id="pricing" className="py-20 px-6 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-              Pilih Paket yang Tepat
-            </h2>
-            <p className="text-gray-500 max-w-sm mx-auto">
-              Mulai dari Rp15.000 untuk satu fitur, atau Rp30.000 untuk akses penuh.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: '📚',
-                name: 'Starter',
-                desc: 'Mulai dari satu fitur',
-                price: 'IDR 15.000',
-                period: 'per fitur',
-                features: ['✓ Akses 1 fitur pilihan', '✓ Upload 1 dokumen', '✓ Laporan hasil detail', '✓ Support 24 jam', '✓ Valid 7 hari'],
-                color: 'bg-white border-gray-200',
-                button: 'border border-indigo-200 text-indigo-600 hover:bg-indigo-50',
-              },
-              {
-                icon: '⭐',
-                name: 'Pro',
-                desc: 'Semua fitur, satu harga',
-                price: 'IDR 30.000',
-                period: 'akses penuh',
-                features: ['✓ Semua 3 fitur (simulasi, analisa, plagiasi)', '✓ Unlimited upload per 30 hari', '✓ Laporan PDF & detail', '✓ Priority support', '✓ Akses fitur baru'],
-                color: 'bg-indigo-50 border-indigo-200 shadow-lg shadow-indigo-100',
-                button: 'bg-indigo-600 text-white hover:bg-indigo-700',
-                badge: true,
-              },
-              {
-                icon: '🚀',
-                name: 'Enterprise',
-                desc: 'Untuk organisasi/serius',
-                price: 'Hubungi kami',
-                period: 'custom package',
-                features: ['✓ Akses unlimited semua fitur', '✓ Dedicated support team', '✓ Custom integration', '✓ Laporan analytics lengkap', '✓ SLA guarantee'],
-                color: 'bg-white border-gray-200',
-                button: 'border border-gray-300 text-gray-600 hover:bg-gray-50',
-              },
-            ].map((plan, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={`relative border ${plan.color} rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1.5`}
-              >
-                {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">REKOMENDASI</span>
-                  </div>
-                )}
-                <div className="text-4xl mb-3">{plan.icon}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>
-                <p className="text-xs text-gray-500 mb-6">{plan.desc}</p>
-                <div className="mb-6 pb-6 border-b border-gray-100">
-                  <p className="text-3xl font-extrabold text-gray-900">{plan.price}</p>
-                  <p className="text-xs text-gray-400 mt-1">{plan.period}</p>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, j) => (
-                    <li key={j} className="text-sm text-gray-600">{feature}</li>
-                  ))}
-                </ul>
-                <Link
-                  href={plan.name === 'Enterprise' ? '#' : '/auth/login'}
-                  className={`block text-center w-full px-6 py-3 rounded-xl font-semibold text-sm transition-all ${plan.button}`}
-                  onClick={(e) => {
-                    if (plan.name === 'Enterprise') {
-                      e.preventDefault()
-                    }
-                  }}
-                >
-                  {plan.name === 'Enterprise' ? 'Hubungi Sales' : 'Beli Paket'}
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="text-center mt-12"
-          >
-            <p className="text-sm text-gray-500 mb-3">
-              ❓ Ada pertanyaan? <a href="#" className="text-indigo-600 font-semibold hover:underline">Hubungi kami</a>
-            </p>
-            <p className="text-xs text-gray-400">
-              💳 Tersedia pembayaran dengan kartu kredit, debit, atau e-wallet
-            </p>
           </motion.div>
         </div>
       </section>
@@ -832,105 +724,6 @@ export default function Home() {
               </div>
             </motion.div>
           </div>
-        </div>
-      </section>
-      {/* ── PRICING ── */}
-      <section id="pricing" className="py-20 px-6 bg-gray-50">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-              Pilih Paket yang Tepat
-            </h2>
-            <p className="text-gray-500 max-w-sm mx-auto">
-              Bayar sesuai kebutuhanmu, tanpa ikatan jangka panjang.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: '📚',
-                name: 'Starter',
-                desc: 'Untuk percobaan',
-                price: 'IDR 29.000',
-                period: 'per upload',
-                features: ['✓ Upload 1 dokumen', '✓ Simulasi sidang AI', '✓ Analisa 5 aspek', '✓ Cek plagiasi & AI'],
-                color: 'bg-white border-gray-200',
-                button: 'border border-indigo-200 text-indigo-600 hover:bg-indigo-50',
-              },
-              {
-                icon: '⭐',
-                name: 'Pro',
-                desc: 'Paling populer',
-                price: 'IDR 99.000',
-                period: 'per 5 upload',
-                features: ['✓ Upload 5 dokumen', '✓ Simulasi sidang unlimited', '✓ Analisa lengkap', '✓ Cek plagiasi & AI', '✓ Laporan PDF'],
-                color: 'bg-indigo-50 border-indigo-200 shadow-lg shadow-indigo-100',
-                button: 'bg-indigo-600 text-white hover:bg-indigo-700',
-                badge: true,
-              },
-              {
-                icon: '🚀',
-                name: 'Enterprise',
-                desc: 'Untuk serius',
-                price: 'Hubungi kami',
-                period: 'custom package',
-                features: ['✓ Upload unlimited', '✓ Priority support', '✓ Custom AI training', '✓ Team collaboration', '✓ API access'],
-                color: 'bg-white border-gray-200',
-                button: 'border border-gray-300 text-gray-600 hover:bg-gray-50',
-              },
-            ].map((plan, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={`relative border ${plan.color} rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1.5`}
-              >
-                {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">REKOMENDASI</span>
-                  </div>
-                )}
-                <div className="text-4xl mb-3">{plan.icon}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>
-                <p className="text-xs text-gray-500 mb-6">{plan.desc}</p>
-                <div className="mb-6 pb-6 border-b border-gray-100">
-                  <p className="text-3xl font-extrabold text-gray-900">{plan.price}</p>
-                  <p className="text-xs text-gray-400 mt-1">{plan.period}</p>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, j) => (
-                    <li key={j} className="text-sm text-gray-600">{feature}</li>
-                  ))}
-                </ul>
-                <button className={`w-full px-6 py-3 rounded-xl font-semibold text-sm transition-all ${plan.button}`}>
-                  {plan.name === 'Enterprise' ? 'Hubungi Sales' : 'Pilih Paket'}
-                </button>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="text-center mt-12"
-          >
-            <p className="text-sm text-gray-500 mb-3">
-              ❓ Pertanyaan tentang paket? <a href="#" className="text-indigo-600 font-semibold hover:underline">Hubungi kami</a>
-            </p>
-            <p className="text-xs text-gray-400">
-              💳 Semua paket dapat diakses dengan kartu kredit, debit, atau e-wallet
-            </p>
-          </motion.div>
         </div>
       </section>
       {/* ── CTA BOTTOM ── */}

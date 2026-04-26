@@ -33,6 +33,9 @@ export default function RootLayout({
               <Link href="/similarity" className="text-gray-500 hover:text-indigo-600 transition-colors font-medium">
                 Plagiasi
               </Link>
+              <Link href="/pricing" className="text-gray-500 hover:text-indigo-600 transition-colors font-medium">
+                Harga
+              </Link>
               <Link href="/auth/login" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors">
                 Login
               </Link>
