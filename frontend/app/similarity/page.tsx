@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -25,24 +24,6 @@ const DEMO_RESULT = {
 }
 
 export default function SimilarityPage() {
-  const [file, setFile] = useState<File | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<null | typeof DEMO_RESULT>(null)
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0] ?? null
-    setFile(f)
-    setResult(null)
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!file) return
-    setLoading(true)
-    await new Promise((r) => setTimeout(r, 2000))
-    setResult(DEMO_RESULT)
-    setLoading(false)
-  }
 
   function colorFor(val: number, thresholds: [number, number]) {
     if (val <= thresholds[0]) return 'bg-emerald-500'
@@ -110,106 +91,69 @@ export default function SimilarityPage() {
         </div>
       </section>
 
-      {/* Upload Document */}
+      {/* Contoh Hasil Pengecekan */}
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Dokumenmu</h2>
-            <p className="text-gray-400 text-sm">Hasil estimasi tersedia dalam hitungan detik</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Contoh Hasil Pengecekan</h2>
+            <p className="text-gray-400 text-sm">Laporan per bab dengan detail kesamaan dan AI detection</p>
           </div>
-
-          {/* Upload Form */}
-          <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Upload Dokumen Skripsi</label>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-amber-300 transition-colors">
-              <div className="text-3xl mb-2">📄</div>
-              <p className="text-sm text-gray-500 mb-4">PDF, PPT, atau PPTX — maks. 20 MB</p>
-              <input
-                type="file"
-                accept=".pdf,.ppt,.pptx"
-                onChange={handleFileChange}
-                className="hidden"
-                id="file-upload"
-              />
-              <label
-                htmlFor="file-upload"
-                className="cursor-pointer inline-block bg-amber-500 hover:bg-amber-400 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
-              >
-                Pilih File
-              </label>
-              {file && (
-                <p className="mt-3 text-sm text-gray-700 font-medium">{file.name}</p>
-              )}
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-4">
+            {/* Overview Cards */}
+            <div className="grid grid-cols-2 gap-4">
+              <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm text-center">
+                <div className="text-4xl font-bold text-gray-900">{DEMO_RESULT.similarity}%</div>
+                <div className="mt-1 text-sm text-gray-500">Estimasi Kemiripan</div>
+              </motion.div>
+              <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.05 }} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm text-center">
+                <div className="text-4xl font-bold text-gray-900">{DEMO_RESULT.aiText}%</div>
+                <div className="mt-1 text-sm text-gray-500">Estimasi Teks AI</div>
+              </motion.div>
             </div>
 
-            <button
-              type="submit"
-              disabled={!file || loading}
-              className="mt-4 w-full bg-amber-500 hover:bg-amber-400 disabled:bg-gray-200 disabled:text-gray-400 text-white text-base font-semibold py-3 rounded-xl transition-colors"
-            >
-              {loading ? 'Menganalisis...' : 'Cek Sekarang'}
-            </button>
-          </form>
-
-          {/* Results Demo */}
-          {result && (
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mt-6 space-y-4">
-              {/* Overview Cards */}
-              <div className="grid grid-cols-2 gap-4">
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm text-center">
-                  <div className="text-4xl font-bold text-gray-900">{result.similarity}%</div>
-                  <div className="mt-1 text-sm text-gray-500">Estimasi Kemiripan</div>
-                </motion.div>
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm text-center">
-                  <div className="text-4xl font-bold text-gray-900">{result.aiText}%</div>
-                  <div className="mt-1 text-sm text-gray-500">Estimasi Teks AI</div>
-                </motion.div>
+            {/* Per Chapter */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h2 className="font-semibold text-gray-900 text-base">Rincian Per Bab</h2>
               </div>
-
-              {/* Per Chapter */}
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100">
-                  <h2 className="font-semibold text-gray-900 text-base">Rincian Per Bab</h2>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {result.chapters.map((ch) => (
-                    <div key={ch.name} className="px-6 py-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                        <span className="text-sm font-medium text-gray-800">{ch.name}</span>
-                        <div className="flex gap-2 flex-wrap">
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeFor(ch.similarity, [15, 30])}`}>
-                            {ch.similarity}% mirip
-                          </span>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeFor(ch.aiText, [20, 40])}`}>
-                            {ch.aiText}% AI
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${colorFor(ch.similarity, [15, 30])}`}
-                            style={{ width: `${ch.similarity}%` }}
-                          />
-                        </div>
-                        <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${colorFor(ch.aiText, [20, 40])}`}
-                            style={{ width: `${ch.aiText}%` }}
-                          />
-                        </div>
+              <div className="divide-y divide-gray-50">
+                {DEMO_RESULT.chapters.map((ch) => (
+                  <div key={ch.name} className="px-6 py-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                      <span className="text-sm font-medium text-gray-800">{ch.name}</span>
+                      <div className="flex gap-2 flex-wrap">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeFor(ch.similarity, [15, 30])}`}>
+                          {ch.similarity}% mirip
+                        </span>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeFor(ch.aiText, [20, 40])}`}>
+                          {ch.aiText}% AI
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex gap-2">
+                      <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${colorFor(ch.similarity, [15, 30])}`}
+                          style={{ width: `${ch.similarity}%` }}
+                        />
+                      </div>
+                      <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${colorFor(ch.aiText, [20, 40])}`}
+                          style={{ width: `${ch.aiText}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
+            </div>
 
-              {/* Disclaimer */}
-              <p className="text-xs text-gray-400 text-center px-4">
-                ⚠️ Hasil merupakan estimasi. Bukan setara dengan layanan Turnitin atau alat deteksi AI profesional lainnya.
-              </p>
-            </motion.div>
-          )}
+            {/* Disclaimer */}
+            <p className="text-xs text-gray-400 text-center px-4">
+              ⚠️ Hasil merupakan estimasi. Bukan setara dengan layanan Turnitin atau alat deteksi AI profesional lainnya.
+            </p>
+          </motion.div>
         </div>
       </section>
 
