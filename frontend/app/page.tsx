@@ -45,11 +45,52 @@ const FEATURES = [
   },
 ]
 
-const STEPS = [
-  { num: '01', icon: '📤', title: 'Upload Skripsi', desc: 'Upload file PDF atau PPT' },
-  { num: '02', icon: '🤖', title: 'AI Membaca', desc: 'AI menganalisis seluruh dokumen' },
-  { num: '03', icon: '💬', title: 'Simulasi Dimulai', desc: 'AI bertanya seperti dosen penguji' },
-  { num: '04', icon: '🏆', title: 'Lihat Hasil', desc: 'Skor, kelemahan & saran perbaikan' },
+const FEATURE_STEPS: Record<string, { num: string; icon: string; title: string; desc: string }[]> = {
+  simulasi: [
+    { num: '01', icon: '📤', title: 'Upload Skripsi', desc: 'Upload file PDF atau PPT skripsimu' },
+    { num: '02', icon: '🤖', title: 'AI Membaca', desc: 'AI menganalisis seluruh isi dokumen' },
+    { num: '03', icon: '💬', title: 'Simulasi Dimulai', desc: 'AI bertanya satu per satu seperti dosen penguji' },
+    { num: '04', icon: '🏆', title: 'Evaluasi Jawaban', desc: 'Lihat di mana kamu perlu lebih siap' },
+  ],
+  analisa: [
+    { num: '01', icon: '📤', title: 'Upload Skripsi', desc: 'Upload file PDF atau PPT skripsimu' },
+    { num: '02', icon: '🔬', title: 'AI Menganalisis', desc: 'AI menilai setiap aspek penulisan skripsi' },
+    { num: '03', icon: '📊', title: 'Skor Keluar', desc: 'Skor 0–100 per aspek ditampilkan' },
+    { num: '04', icon: '💡', title: 'Saran Perbaikan', desc: 'Perbaiki kelemahan sebelum hari sidang' },
+  ],
+  plagiasi: [
+    { num: '01', icon: '📤', title: 'Upload Skripsi', desc: 'Upload file PDF atau PPT skripsimu' },
+    { num: '02', icon: '🔍', title: 'Cek Kemiripan', desc: 'Sistem memeriksa kemiripan teks antar dokumen' },
+    { num: '03', icon: '🤖', title: 'Deteksi Teks AI', desc: 'Estimasi persentase teks yang ditulis AI' },
+    { num: '04', icon: '📋', title: 'Laporan Per Bab', desc: 'Detail kemiripan dan AI per bab' },
+  ],
+}
+
+const TAB_CONFIG = [
+  { key: 'simulasi', label: '🎤 Simulasi Sidang', activeClass: 'bg-indigo-600 text-white shadow-md' },
+  { key: 'analisa', label: '📊 Analisa & Penilaian', activeClass: 'bg-emerald-600 text-white shadow-md' },
+  { key: 'plagiasi', label: '🔍 Cek Kesamaan & AI', activeClass: 'bg-amber-500 text-white shadow-md' },
+]
+
+const TAB_COLORS: Record<string, { border: string; num: string; line: string }> = {
+  simulasi: { border: 'border-indigo-200', num: 'text-indigo-500', line: 'bg-indigo-100' },
+  analisa: { border: 'border-emerald-200', num: 'text-emerald-500', line: 'bg-emerald-100' },
+  plagiasi: { border: 'border-amber-200', num: 'text-amber-500', line: 'bg-amber-100' },
+}
+
+const ANALYSIS_SCORES = [
+  { aspect: 'Latar Belakang', score: 82 },
+  { aspect: 'Rumusan Masalah', score: 75 },
+  { aspect: 'Metodologi', score: 68 },
+  { aspect: 'Analisis & Pembahasan', score: 85 },
+  { aspect: 'Kesimpulan', score: 79 },
+]
+
+const SIMILARITY_CHAPTERS = [
+  { chapter: 'BAB I – Pendahuluan', similarity: 12, ai: 15 },
+  { chapter: 'BAB II – Tinjauan Pustaka', similarity: 28, ai: 35 },
+  { chapter: 'BAB III – Metodologi', similarity: 10, ai: 18 },
+  { chapter: 'BAB IV – Hasil & Pembahasan', similarity: 14, ai: 20 },
 ]
 
 const CHAT_DEMO = [
@@ -61,6 +102,7 @@ const CHAT_DEMO = [
 export default function Home() {
   const [textIndex, setTextIndex] = useState(0)
   const [chatIndex, setChatIndex] = useState(0)
+  const [activeTab, setActiveTab] = useState('simulasi')
 
   useEffect(() => {
     const t = setInterval(() => setTextIndex(i => (i + 1) % TYPING_TEXTS.length), 3200)
@@ -80,17 +122,16 @@ export default function Home() {
         {/* Background dots */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(99,102,241,0.07)_1px,transparent_0)] bg-[size:36px_36px]" />
 
-        {/* Mascot — animated background decoration, right side */}
-        <div className="absolute right-0 bottom-0 w-56 lg:w-72 xl:w-[340px] pointer-events-none select-none">
+        {/* Mascot — animated right-side decoration */}
+        <div className="absolute right-0 bottom-0 w-64 lg:w-80 xl:w-[400px] pointer-events-none select-none">
           <motion.div
             animate={{ y: [0, -22, 0], rotate: [-3, 2.5, -3] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
             style={{ transformOrigin: 'bottom center' }}
-            className="opacity-[0.18] lg:opacity-[0.26]"
           >
             <Image
               src="/mascot.png"
-              alt=""
+              alt="Maskot TemanSkripsi"
               width={400}
               height={400}
               priority
@@ -98,11 +139,9 @@ export default function Home() {
             />
           </motion.div>
         </div>
-        {/* Fade mascot into bg on right edge */}
-        <div className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-white/70 to-transparent pointer-events-none" />
 
         {/* Hero content */}
-        <div className="relative z-10 max-w-2xl">
+        <div className="relative z-10 max-w-2xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -152,13 +191,13 @@ export default function Home() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="flex flex-col sm:flex-row gap-3"
+            className="flex flex-col sm:flex-row gap-3 justify-center"
           >
             <Link
               href="/sessions"
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-semibold text-base transition-all duration-200 hover:scale-105 shadow-md shadow-indigo-200"
             >
-              🚀 Mulai Simulasi — Gratis
+              🚀 Mulai Sekarang — Gratis
             </Link>
             <a
               href="#fitur"
@@ -172,7 +211,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center gap-5 mt-8"
+            className="flex items-center gap-5 mt-8 justify-center"
           >
             {['✓ Gratis selamanya', '✓ Tanpa daftar dulu', '✓ Hasil instan'].map((t, i) => (
               <span key={i} className="text-xs text-gray-400 font-medium">{t}</span>
@@ -236,32 +275,59 @@ export default function Home() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-14"
+            className="text-center mb-10"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Cara Kerja</h2>
-            <p className="text-gray-500">4 langkah sederhana untuk mulai latihan sidang</p>
+            <p className="text-gray-500">Pilih fitur untuk lihat alurnya</p>
           </motion.div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 relative">
-            <div className="hidden lg:block absolute top-8 left-[12.5%] right-[12.5%] h-0.5 bg-indigo-100" />
-            {STEPS.map((s, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="text-center relative"
+          {/* Tab switcher */}
+          <div className="flex items-center justify-center gap-2 mb-12 flex-wrap">
+            {TAB_CONFIG.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                  activeTab === tab.key
+                    ? tab.activeClass
+                    : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-300'
+                }`}
               >
-                <div className="w-16 h-16 bg-white border-2 border-indigo-200 rounded-2xl flex flex-col items-center justify-center mx-auto mb-4 gap-0.5 relative z-10 shadow-sm">
-                  <span className="text-xl">{s.icon}</span>
-                  <span className="text-indigo-500 font-bold text-xs">{s.num}</span>
-                </div>
-                <h3 className="font-bold text-gray-900 mb-1.5 text-sm">{s.title}</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">{s.desc}</p>
-              </motion.div>
+                {tab.label}
+              </button>
             ))}
           </div>
+
+          {/* Steps */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 relative">
+                <div className={`hidden lg:block absolute top-8 left-[12.5%] right-[12.5%] h-0.5 ${TAB_COLORS[activeTab].line}`} />
+                {FEATURE_STEPS[activeTab].map((s, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08 }}
+                    className="text-center relative"
+                  >
+                    <div className={`w-16 h-16 bg-white border-2 ${TAB_COLORS[activeTab].border} rounded-2xl flex flex-col items-center justify-center mx-auto mb-4 gap-0.5 relative z-10 shadow-sm`}>
+                      <span className="text-xl">{s.icon}</span>
+                      <span className={`${TAB_COLORS[activeTab].num} font-bold text-xs`}>{s.num}</span>
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-1.5 text-sm">{s.title}</h3>
+                    <p className="text-xs text-gray-400 leading-relaxed">{s.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </section>
 
@@ -380,6 +446,220 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── ANALISA & PENILAIAN ── */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+            {/* Left on desktop: score card mock */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden order-2 lg:order-1"
+            >
+              <div className="bg-emerald-600 px-5 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-lg">📊</div>
+                  <div>
+                    <p className="text-white text-sm font-semibold">Hasil Analisa Skripsi</p>
+                    <p className="text-emerald-200 text-xs">Dinilai AI per aspek</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-white text-3xl font-extrabold">78</p>
+                  <p className="text-emerald-200 text-xs">Overall Score</p>
+                </div>
+              </div>
+              <div className="p-5 space-y-4 bg-gray-50">
+                {ANALYSIS_SCORES.map((item, i) => (
+                  <div key={i}>
+                    <div className="flex justify-between mb-1.5">
+                      <span className="text-xs text-gray-700 font-medium">{item.aspect}</span>
+                      <span className="text-xs font-bold text-emerald-600">{item.score}</span>
+                    </div>
+                    <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <motion.div
+                        className={`h-full rounded-full ${item.score >= 80 ? 'bg-emerald-500' : item.score >= 65 ? 'bg-amber-400' : 'bg-red-400'}`}
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${item.score}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: i * 0.1 }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-3 border-t border-gray-100 bg-white">
+                <p className="text-xs text-gray-500 flex items-start gap-1.5">
+                  <span className="text-amber-500 mt-0.5">💡</span>
+                  <span>Metodologi perlu diperkuat — tambahkan justifikasi pemilihan metode penelitian</span>
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Right on desktop: info */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="order-1 lg:order-2"
+            >
+              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">
+                Analisa & Penilaian
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-5 mb-4 leading-tight">
+                Objektif. Menyeluruh.<br />Per Aspek.
+              </h2>
+              <p className="text-gray-500 mb-8 leading-relaxed text-sm">
+                AI menilai skripsimu dari 5 aspek utama — mulai dari latar belakang, metodologi, hingga kesimpulan. Skor dan saran langsung keluar setelah analisa selesai.
+              </p>
+              <div className="space-y-5">
+                {[
+                  { icon: '📏', title: '5 Aspek Penilaian', desc: 'Latar belakang, metodologi, analisis, konsistensi, kesimpulan' },
+                  { icon: '🎯', title: 'Skor 0–100 per Aspek', desc: 'Nilai objektif berbasis isi dokumenmu, bukan template umum' },
+                  { icon: '📝', title: 'Saran Perbaikan Detail', desc: 'Tahu persis apa yang harus diperbaiki sebelum hari sidang' },
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: 12 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1 }}
+                    className="flex gap-4 items-start"
+                  >
+                    <div className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-lg flex-shrink-0 shadow-sm">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{item.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CEK KESAMAAN & AI ── */}
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+            {/* Left: info */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1 rounded-full">
+                Cek Kesamaan & Teks AI
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-5 mb-4 leading-tight">
+                Transparan. Cepat.<br />Per Bab.
+              </h2>
+              <p className="text-gray-500 mb-8 leading-relaxed text-sm">
+                Estimasi kemiripan teks dan deteksi konten yang kemungkinan ditulis AI — ditampilkan per bab agar kamu tahu persis di mana yang perlu diperhatikan.
+              </p>
+              <div className="space-y-5">
+                {[
+                  { icon: '📐', title: 'Estimasi Kemiripan Teks', desc: 'Persentase kemiripan antar dokumen, per bab' },
+                  { icon: '🤖', title: 'Deteksi Teks AI', desc: 'Estimasi seberapa banyak teks yang kemungkinan ditulis AI' },
+                  { icon: '⚠️', title: 'Laporan Transparan', desc: 'Estimasi untuk deteksi dini — bukan pengganti Turnitin' },
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -12 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1 }}
+                    className="flex gap-4 items-start"
+                  >
+                    <div className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-lg flex-shrink-0 shadow-sm">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{item.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Right: similarity report mock */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden"
+            >
+              <div className="bg-amber-500 px-5 py-4 flex items-center gap-3">
+                <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-lg">🔍</div>
+                <div>
+                  <p className="text-white text-sm font-semibold">Laporan Kesamaan & AI</p>
+                  <p className="text-amber-100 text-xs">Analisa per bab</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 divide-x divide-gray-100 border-b border-gray-100">
+                <div className="px-5 py-4 text-center">
+                  <p className="text-2xl font-extrabold text-gray-900">18%</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Estimasi Kemiripan</p>
+                </div>
+                <div className="px-5 py-4 text-center">
+                  <p className="text-2xl font-extrabold text-gray-900">22%</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Estimasi Teks AI</p>
+                </div>
+              </div>
+              <div className="p-5 space-y-4 bg-gray-50">
+                {SIMILARITY_CHAPTERS.map((ch, i) => (
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-700 font-medium">{ch.chapter}</span>
+                      <div className="flex gap-1.5">
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.similarity <= 15 ? 'text-emerald-700 bg-emerald-50' : ch.similarity <= 30 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>
+                          {ch.similarity}% mirip
+                        </span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.ai <= 20 ? 'text-emerald-700 bg-emerald-50' : ch.ai <= 40 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>
+                          {ch.ai}% AI
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                        <motion.div
+                          className={`h-full rounded-full ${ch.similarity <= 15 ? 'bg-emerald-500' : ch.similarity <= 30 ? 'bg-amber-400' : 'bg-red-500'}`}
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${Math.min(ch.similarity * 2.5, 100)}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.7, delay: i * 0.1 }}
+                        />
+                      </div>
+                      <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                        <motion.div
+                          className={`h-full rounded-full ${ch.ai <= 20 ? 'bg-emerald-500' : ch.ai <= 40 ? 'bg-amber-400' : 'bg-red-500'}`}
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${Math.min(ch.ai * 2.5, 100)}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.7, delay: i * 0.1 + 0.05 }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-3 border-t border-gray-100 bg-white">
+                <p className="text-[10px] text-gray-400">
+                  ⚠️ Hasil merupakan estimasi. Bukan pengganti Turnitin atau alat deteksi AI profesional.
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA BOTTOM ── */}
       <section className="py-20 px-6 bg-white">
         <motion.div
@@ -398,7 +678,7 @@ export default function Home() {
             href="/sessions"
             className="inline-block bg-white hover:bg-gray-50 text-indigo-700 font-bold px-10 py-3.5 rounded-xl transition-all duration-200 hover:scale-105 shadow-md"
           >
-            Mulai Simulasi Sekarang →
+            Mulai Sekarang →
           </Link>
         </motion.div>
       </section>

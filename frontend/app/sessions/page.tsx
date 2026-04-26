@@ -94,7 +94,7 @@ function ChatSession() {
             disabled={starting}
             className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-8 py-3 rounded-xl font-semibold text-lg transition-colors"
           >
-            {starting ? 'Mempersiapkan...' : '🚀 Mulai Simulasi'}
+            {starting ? 'Mempersiapkan...' : '🚀 Mulai Sekarang'}
           </button>
         ) : (
           <p className="text-red-500">Pilih dokumen terlebih dahulu dari halaman <a href="/documents" className="underline text-indigo-600">Dokumen</a>.</p>
