@@ -118,12 +118,62 @@ export default function Home() {
     <div className="min-h-screen bg-white">
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-white via-indigo-50/30 to-white pt-12 pb-28 px-6 min-h-[88vh] flex items-center">
-        {/* Background dots */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(99,102,241,0.07)_1px,transparent_0)] bg-[size:36px_36px]" />
+      <section className="relative overflow-hidden bg-white pt-12 pb-28 px-6 min-h-[88vh] flex items-center">
+        {/* Constellation SVG background */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="xMidYMid slice"
+          aria-hidden="true"
+        >
+          {/* Lines */}
+          <line x1="8%" y1="12%" x2="22%" y2="28%" stroke="rgba(99,102,241,0.12)" strokeWidth="1" />
+          <line x1="22%" y1="28%" x2="14%" y2="55%" stroke="rgba(99,102,241,0.10)" strokeWidth="1" />
+          <line x1="14%" y1="55%" x2="28%" y2="72%" stroke="rgba(99,102,241,0.12)" strokeWidth="1" />
+          <line x1="28%" y1="72%" x2="6%" y2="85%" stroke="rgba(99,102,241,0.08)" strokeWidth="1" />
+          <line x1="22%" y1="28%" x2="38%" y2="18%" stroke="rgba(99,102,241,0.10)" strokeWidth="1" />
+          <line x1="38%" y1="18%" x2="52%" y2="32%" stroke="rgba(99,102,241,0.10)" strokeWidth="1" />
+          <line x1="52%" y1="32%" x2="48%" y2="52%" stroke="rgba(99,102,241,0.08)" strokeWidth="1" />
+          <line x1="48%" y1="52%" x2="62%" y2="65%" stroke="rgba(99,102,241,0.10)" strokeWidth="1" />
+          <line x1="62%" y1="65%" x2="54%" y2="80%" stroke="rgba(99,102,241,0.08)" strokeWidth="1" />
+          <line x1="62%" y1="65%" x2="75%" y2="58%" stroke="rgba(99,102,241,0.10)" strokeWidth="1" />
+          <line x1="75%" y1="58%" x2="88%" y2="70%" stroke="rgba(99,102,241,0.08)" strokeWidth="1" />
+          <line x1="88%" y1="15%" x2="75%" y2="32%" stroke="rgba(99,102,241,0.10)" strokeWidth="1" />
+          <line x1="75%" y1="32%" x2="88%" y2="48%" stroke="rgba(99,102,241,0.08)" strokeWidth="1" />
+          <line x1="88%" y1="48%" x2="75%" y2="58%" stroke="rgba(99,102,241,0.10)" strokeWidth="1" />
+          <line x1="38%" y1="18%" x2="52%" y2="8%" stroke="rgba(99,102,241,0.08)" strokeWidth="1" />
+          <line x1="14%" y1="55%" x2="2%" y2="68%" stroke="rgba(99,102,241,0.08)" strokeWidth="1" />
+          <line x1="52%" y1="32%" x2="68%" y2="22%" stroke="rgba(99,102,241,0.10)" strokeWidth="1" />
+          <line x1="68%" y1="22%" x2="75%" y2="32%" stroke="rgba(99,102,241,0.10)" strokeWidth="1" />
+          {/* Filled dots (nodes) */}
+          <circle cx="8%" cy="12%" r="3" fill="rgba(99,102,241,0.25)" />
+          <circle cx="22%" cy="28%" r="4" fill="rgba(99,102,241,0.28)" />
+          <circle cx="14%" cy="55%" r="3" fill="rgba(99,102,241,0.22)" />
+          <circle cx="28%" cy="72%" r="3" fill="rgba(99,102,241,0.20)" />
+          <circle cx="6%" cy="85%" r="2.5" fill="rgba(99,102,241,0.18)" />
+          <circle cx="38%" cy="18%" r="3.5" fill="rgba(99,102,241,0.22)" />
+          <circle cx="52%" cy="8%" r="2.5" fill="rgba(99,102,241,0.18)" />
+          <circle cx="52%" cy="32%" r="4" fill="rgba(99,102,241,0.25)" />
+          <circle cx="48%" cy="52%" r="3" fill="rgba(99,102,241,0.20)" />
+          <circle cx="62%" cy="65%" r="4" fill="rgba(99,102,241,0.25)" />
+          <circle cx="54%" cy="80%" r="2.5" fill="rgba(99,102,241,0.18)" />
+          <circle cx="75%" cy="32%" r="3.5" fill="rgba(99,102,241,0.22)" />
+          <circle cx="68%" cy="22%" r="3" fill="rgba(99,102,241,0.20)" />
+          <circle cx="75%" cy="58%" r="3.5" fill="rgba(99,102,241,0.22)" />
+          <circle cx="88%" cy="15%" r="3" fill="rgba(99,102,241,0.20)" />
+          <circle cx="88%" cy="48%" r="3" fill="rgba(99,102,241,0.18)" />
+          <circle cx="88%" cy="70%" r="2.5" fill="rgba(99,102,241,0.15)" />
+          <circle cx="2%" cy="68%" r="2.5" fill="rgba(99,102,241,0.18)" />
+          {/* Hollow ring dots */}
+          <circle cx="30%" cy="10%" r="3.5" fill="none" stroke="rgba(99,102,241,0.20)" strokeWidth="1.5" />
+          <circle cx="8%" cy="38%" r="3" fill="none" stroke="rgba(99,102,241,0.18)" strokeWidth="1.5" />
+          <circle cx="92%" cy="32%" r="3" fill="none" stroke="rgba(99,102,241,0.18)" strokeWidth="1.5" />
+          <circle cx="60%" cy="88%" r="3" fill="none" stroke="rgba(99,102,241,0.15)" strokeWidth="1.5" />
+          <circle cx="42%" cy="78%" r="2.5" fill="none" stroke="rgba(99,102,241,0.15)" strokeWidth="1.5" />
+        </svg>
 
         {/* Mascot — animated right-side decoration */}
-        <div className="absolute right-0 bottom-0 w-64 lg:w-80 xl:w-[400px] pointer-events-none select-none">
+        <div className="absolute right-8 lg:right-12 xl:right-16 bottom-0 w-52 lg:w-64 xl:w-[320px] pointer-events-none select-none">
           <motion.div
             animate={{ y: [0, -22, 0], rotate: [-3, 2.5, -3] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
@@ -141,7 +191,7 @@ export default function Home() {
         </div>
 
         {/* Hero content */}
-        <div className="relative z-10 max-w-2xl mx-auto text-center">
+        <div className="relative z-10 max-w-3xl mx-auto text-center px-4">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -162,7 +212,7 @@ export default function Home() {
             Teman<span className="text-indigo-600">Skripsi</span>
           </motion.h1>
 
-          <div className="h-9 flex items-center mb-5">
+          <div className="h-9 flex items-center justify-center mb-5">
             <AnimatePresence mode="wait">
               <motion.p
                 key={textIndex}
@@ -170,7 +220,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.35 }}
-                className="text-xl lg:text-2xl font-semibold text-indigo-600"
+                className="text-xl lg:text-2xl font-semibold text-indigo-600 text-center"
               >
                 {TYPING_TEXTS[textIndex]}
               </motion.p>
@@ -181,11 +231,28 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="text-gray-500 text-lg max-w-lg mb-10 leading-relaxed"
+            className="text-gray-500 text-lg max-w-2xl mx-auto mb-6 leading-relaxed"
           >
-            Latihan sidang skripsi dengan AI sebagai dosen penguji kritis.
-            Simulasi, analisa mendalam, dan uji kesamaan teks — semua dalam satu platform.
+            Platform AI untuk persiapan sidang skripsi mahasiswa Indonesia. Latihan tanya-jawab dengan AI dosen penguji kritis, analisa mendalam skripsimu, dan uji kesamaan teks — semua dalam satu tempat, gratis.
           </motion.p>
+          {/* SEO keyword stats */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35 }}
+            className="flex items-center justify-center gap-6 mb-10 flex-wrap"
+          >
+            {[
+              { num: '3', label: 'Fitur utama' },
+              { num: '5', label: 'Aspek penilaian' },
+              { num: '100%', label: 'Gratis digunakan' },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <p className="text-2xl font-extrabold text-indigo-600">{stat.num}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{stat.label}</p>
+              </div>
+            ))}
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -194,7 +261,7 @@ export default function Home() {
             className="flex flex-col sm:flex-row gap-3 justify-center"
           >
             <Link
-              href="/sessions"
+              href="/auth/login"
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-semibold text-base transition-all duration-200 hover:scale-105 shadow-md shadow-indigo-200"
             >
               🚀 Mulai Sekarang — Gratis
