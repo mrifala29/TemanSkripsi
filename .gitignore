@@ -3,6 +3,8 @@
 docs/
 
 database/
+!/backend/database/
+/database/*.sqlite
 
 venv/
 .env
