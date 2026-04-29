@@ -9,6 +9,74 @@ Fokus:
 
 ---
 
+## Alur Aplikasi (User Journey)
+
+```
+[Landing Page] → [Halaman Harga] → [Login / Register] → [Dashboard App]
+     /                /pricing          /auth/login           /documents
+                                        /auth/register        /sessions
+                                                              /analysis
+                                                              /similarity
+```
+
+1. User mengunjungi landing page (`/`) — melihat fitur & preview
+2. Klik **Mulai Sekarang** → diarahkan ke halaman harga (`/pricing`)
+3. Klik **Beli Sekarang** → diarahkan ke login/register (`/auth/login`)
+4. Setelah login → masuk ke area app (`/documents`, `/sessions`, dll.)
+5. Halaman app **terlindungi** — redirect ke login jika belum autentikasi
+
+---
+
+## Struktur Frontend (3 Zone)
+
+| Zone | Path | Siapa yang Bisa Akses |
+|------|------|----------------------|
+| **Public / Marketing** | `/`, `/pricing`, `/auth/*` | Semua pengunjung (tanpa login) |
+| **App / Dashboard** | `/documents`, `/sessions`, `/analysis`, `/similarity` | User yang sudah login |
+| **Admin** | `/admin/*` | Admin saja (role-based) |
+
+Setiap zone punya **navbar berbeda** yang dikendalikan oleh `components/NavbarController.tsx`:
+- **Public** (`/`, `/pricing`): navbar marketing (Logo, Harga, Login CTA)
+- **App** (`/documents`, `/sessions`, dll.): navbar app (Logo, nav fitur, avatar user, logout)
+- **Auth** (`/auth/*`): tanpa navbar
+- **Admin** (`/admin/*`): sidebar admin *(belum diimplementasi)*
+
+### Struktur Folder Frontend (Aktual)
+
+```
+frontend/app/
+├── layout.tsx          ← root layout (import NavbarController)
+├── page.tsx            ← landing page (public)
+├── pricing/
+│   └── page.tsx        ← halaman harga (public)
+├── auth/               ← tanpa navbar
+│   ├── login/
+│   │   └── page.tsx
+│   └── register/
+│       └── page.tsx
+├── documents/          ← app zone (butuh login)
+│   └── page.tsx        ← dashboard utama user
+├── sessions/           ← app zone (butuh login)
+│   └── page.tsx
+├── analysis/           ← app zone (butuh login)
+│   └── page.tsx
+└── similarity/         ← app zone (butuh login)
+    └── page.tsx
+
+frontend/components/
+└── NavbarController.tsx ← client component, deteksi path → render navbar yg tepat
+
+frontend/lib/
+├── api.ts              ← API client + auth endpoints + Bearer token
+└── auth.ts             ← token storage utilities (localStorage)
+
+frontend/middleware.ts  ← route protection (redirect ke login jika belum auth)
+```
+
+> **Catatan**: Tanpa Next.js Route Groups. Pemisahan zona dihandle oleh `NavbarController` + `middleware.ts`.
+
+---
+
 ## Features (MVP)
 
 ### 1. Upload Dokumen

@@ -1,11 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
+import { auth as authApi } from '@/lib/api'
+import { setAuth } from '@/lib/auth'
 
-export default function LoginPage() {
+function LoginForm() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,9 +24,16 @@ export default function LoginPage() {
     }
     setError('')
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 1200))
-    setLoading(false)
-    window.location.href = '/sessions'
+    try {
+      const res = await authApi.login(email, password)
+      setAuth(res.data.token, res.data.user)
+      const next = searchParams.get('next') || '/documents'
+      router.push(next)
+    } catch (err: any) {
+      setError(err.message || 'Login gagal. Periksa email dan password.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -140,5 +152,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }

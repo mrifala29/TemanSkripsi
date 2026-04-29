@@ -1,11 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
+import { auth as authApi } from '@/lib/api'
+import { setAuth } from '@/lib/auth'
 
 export default function RegisterPage() {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -24,9 +28,15 @@ export default function RegisterPage() {
     }
     setError('')
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 1200))
-    setLoading(false)
-    window.location.href = '/auth/login'
+    try {
+      const res = await authApi.register(name, email, password)
+      setAuth(res.data.token, res.data.user)
+      router.push('/documents')
+    } catch (err: any) {
+      setError(err.message || 'Registrasi gagal. Coba lagi.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

@@ -1,26 +1,58 @@
+import { getToken } from './auth'
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
 async function fetchAPI(endpoint: string, options?: RequestInit) {
+  const token = getToken()
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options?.headers as Record<string, string>),
+  }
+
+  // Remove Content-Type for FormData (let browser set multipart boundary)
+  if (options?.body instanceof FormData) {
+    delete headers['Content-Type']
+  }
+
   const res = await fetch(`${API_URL}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
     ...options,
+    headers,
   })
 
   if (!res.ok) {
-    throw new Error(`API error: ${res.status}`)
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body?.error || body?.message || `API error: ${res.status}`)
   }
 
   return res.json()
+}
+
+export const auth = {
+  register: (name: string, email: string, password: string) =>
+    fetchAPI('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password }),
+    }),
+
+  login: (email: string, password: string) =>
+    fetchAPI('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+
+  logout: () =>
+    fetchAPI('/auth/logout', { method: 'POST' }),
+
+  me: () => fetchAPI('/auth/me'),
 }
 
 export const api = {
   // Documents
   getDocuments: () => fetchAPI('/documents'),
   uploadDocument: (formData: FormData) =>
-    fetchAPI('/documents', { method: 'POST', body: formData, headers: {} }),
+    fetchAPI('/documents', { method: 'POST', body: formData }),
   deleteDocument: (id: string) =>
     fetchAPI(`/documents/${id}`, { method: 'DELETE' }),
 
@@ -48,3 +80,4 @@ export const api = {
   health: () => fetchAPI('/health'),
   testSupabase: () => fetchAPI('/test/supabase'),
 }
+

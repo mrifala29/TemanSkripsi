@@ -166,11 +166,18 @@ function AnalysisContent() {
   const [analyses, setAnalyses] = useState<Analysis[]>([])
   const [selected, setSelected] = useState<Analysis | null>(null)
   const [scores, setScores] = useState<Score[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
-    loadAnalyses()
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    if (token) {
+      setIsLoggedIn(true)
+      loadAnalyses()
+    } else {
+      setLoading(false)
+    }
   }, [])
 
   async function loadAnalyses() {
@@ -217,7 +224,8 @@ function AnalysisContent() {
     )
   }
 
-  if (!loading && !docId && analyses.length === 0) return <AnalysisLanding />
+  if (!isLoggedIn && !loading) return <AnalysisLanding />
+  if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
