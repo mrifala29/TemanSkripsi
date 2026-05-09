@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const APP_ROUTES = ['/documents', '/sessions', '/analysis', '/similarity']
+const PROTECTED_ROUTES = ['/documents', '/sessions', '/analysis', '/similarity']
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value
   const { pathname } = request.nextUrl
 
-  const isAppRoute = APP_ROUTES.some((r) => pathname.startsWith(r))
+  const isProtected = PROTECTED_ROUTES.some(route => pathname.startsWith(route))
 
-  if (isAppRoute && !token) {
+  if (isProtected && !token) {
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
@@ -19,10 +19,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/documents/:path*',
-    '/sessions/:path*',
-    '/analysis/:path*',
-    '/similarity/:path*',
-  ],
+  matcher: ['/documents/:path*', '/sessions/:path*', '/analysis/:path*', '/similarity/:path*'],
 }

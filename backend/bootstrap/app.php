@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // CORS will be handled via config/cors.php
+        $middleware->alias([
+            'supabase.auth' => \App\Http\Middleware\SupabaseAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

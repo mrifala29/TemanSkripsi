@@ -48,3 +48,23 @@ networks:
   temanskripsi:
     driver: bridge
 
+  # ================================
+  # Python AI Service (Port 8001)
+  # ================================
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: temanskripsi-ai
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ai-service:/app
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - temanskripsi
+    restart: unless-stopped
+

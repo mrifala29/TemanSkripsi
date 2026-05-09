@@ -44,23 +44,47 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { loadDocuments() }, [])
+  useEffect(() => {
+    loadDocuments()
+  }, [])
 
-  async function loadDocuments() {
-    setLoading(true)
+  // Auto-poll every 5s while any doc is pending/processing
+  useEffect(() => {
+    const hasActive = documents.some(d => d.parse_status === 'pending' || d.parse_status === 'processing')
+    if (!hasActive) return
+    const interval = setInterval(() => loadDocuments(true), 5000)
+    return () => clearInterval(interval)
+  }, [documents])
+
+  async function loadDocuments(silent = false) {
+    if (!silent) setLoading(true)
     setError(null)
     try {
       const res = await api.getDocuments()
       setDocuments(res.data || [])
     } catch {
-      setError('Gagal memuat dokumen. Periksa koneksi.')
+      if (!silent) setError('Gagal memuat dokumen. Periksa koneksi.')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
+    }
+  }
+
+  async function handleDelete(doc: Document) {
+    if (!confirm(`Hapus "${doc.file_name}"? Aksi ini tidak bisa dibatalkan.`)) return
+    setDeletingId(doc.id)
+    try {
+      await api.deleteDocument(doc.id)
+      setDocuments(prev => prev.filter(d => d.id !== doc.id))
+    } catch (e: any) {
+      setError(e.message || 'Gagal menghapus dokumen.')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -233,6 +257,13 @@ export default function DocumentsPage() {
                           }`}>
                           🔍 Plagiasi
                         </Link>
+                        <button
+                          onClick={() => handleDelete(doc)}
+                          disabled={deletingId === doc.id}
+                          className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors bg-red-50 text-red-600 border-red-200 hover:bg-red-100 disabled:opacity-50"
+                        >
+                          {deletingId === doc.id ? '⏳' : '🗑️'}
+                        </button>
                       </div>
                     </div>
                   </motion.div>
