@@ -195,6 +195,46 @@ class DocumentController extends Controller
     }
 
     /**
+     * Update document title or category (doc_type).
+     */
+    public function update(Request $request, string $id)
+    {
+        $userId = $request->user()->id;
+
+        $rows = $this->supabase->query('documents', 'id,user_id', [
+            'id'      => $id,
+            'user_id' => $userId,
+        ]);
+
+        if (empty($rows)) {
+            return response()->json(['success' => false, 'message' => 'Dokumen tidak ditemukan.'], 404);
+        }
+
+        $allowed = ['title', 'doc_type'];
+        $payload = [];
+
+        if ($request->has('title')) {
+            $request->validate(['title' => 'required|string|max:255']);
+            $payload['title'] = $request->input('title');
+        }
+
+        if ($request->has('doc_type')) {
+            $validTypes = ['draft_proposal', 'laporan_skripsi', 'ppt_proposal', 'ppt_sidang', 'proposal', 'laporan_akhir', 'other'];
+            $request->validate(['doc_type' => 'required|string|in:' . implode(',', $validTypes)]);
+            $payload['doc_type'] = $request->input('doc_type');
+        }
+
+        if (empty($payload)) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada data yang diubah.'], 422);
+        }
+
+        $payload['updated_at'] = now()->toISOString();
+        $this->supabase->update('documents', $payload, ['id' => $id, 'user_id' => $userId]);
+
+        return response()->json(['success' => true, 'message' => 'Dokumen berhasil diperbarui.']);
+    }
+
+    /**
      * Not used (API-only, no HTML forms).
      */
     public function create() {}

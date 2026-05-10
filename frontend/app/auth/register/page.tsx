@@ -31,7 +31,7 @@ export default function RegisterPage() {
     try {
       const res = await authApi.register(name, email, password)
       setAuth(res.data.token, res.data.user)
-      router.push('/documents')
+      router.push('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Registrasi gagal. Coba lagi.')
     } finally {

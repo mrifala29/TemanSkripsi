@@ -56,4 +56,8 @@ Route::middleware('supabase.auth')->group(function () {
     // Analyses
     Route::resource('analyses', AnalysisController::class);
     Route::post('documents/{id}/analyze', [AnalysisController::class, 'analyze']);
+
+    // Similarity checks
+    Route::get('similarity-checks', [AnalysisController::class, 'similarityIndex']);
+    Route::post('documents/{id}/similarity-check', [AnalysisController::class, 'similarityCheck']);
 });

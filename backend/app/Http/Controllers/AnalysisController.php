@@ -64,4 +64,36 @@ class AnalysisController extends Controller
     {
         //
     }
+
+    /**
+     * Trigger document analysis.
+     */
+    public function analyze(Request $request, string $id)
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Analisa sedang diproses.',
+            'data'    => ['id' => $id, 'status' => 'processing'],
+        ], 202);
+    }
+
+    /**
+     * List similarity checks for the authenticated user.
+     */
+    public function similarityIndex(Request $request)
+    {
+        return response()->json(['success' => true, 'data' => []], 200);
+    }
+
+    /**
+     * Trigger similarity check for a document.
+     */
+    public function similarityCheck(Request $request, string $id)
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Pengecekan kemiripan sedang diproses.',
+            'data'    => ['document_id' => $id, 'status' => 'processing'],
+        ], 202);
+    }
 }

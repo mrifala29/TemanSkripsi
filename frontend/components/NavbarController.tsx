@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
 const AUTH_ROUTES = ['/auth/login', '/auth/register']
-const APP_ROUTES  = ['/documents', '/sessions', '/analysis', '/similarity']
+const APP_ROUTES  = ['/dashboard', '/documents', '/sessions', '/analysis', '/similarity']
 
 function MarketingNavbar() {
   return (
@@ -14,9 +14,9 @@ function MarketingNavbar() {
           🎓 Teman<span className="text-indigo-600">Skripsi</span>
         </Link>
         <div className="flex items-center gap-6 text-sm">
-          <Link href="/sessions"   className="text-gray-600 hover:text-indigo-600 transition-colors font-medium">Simulasi</Link>
-          <Link href="/analysis"   className="text-gray-600 hover:text-indigo-600 transition-colors font-medium">Analisa</Link>
-          <Link href="/similarity" className="text-gray-600 hover:text-indigo-600 transition-colors font-medium">Plagiasi</Link>
+          <Link href="/simulasi"   className="text-gray-600 hover:text-indigo-600 transition-colors font-medium">Simulasi</Link>
+          <Link href="/analisa"   className="text-gray-600 hover:text-indigo-600 transition-colors font-medium">Analisa</Link>
+          <Link href="/plagiasi" className="text-gray-600 hover:text-indigo-600 transition-colors font-medium">Plagiasi</Link>
           <Link href="/pricing"    className="text-gray-600 hover:text-indigo-600 transition-colors font-medium">Harga</Link>
           <Link
             href="/auth/login"

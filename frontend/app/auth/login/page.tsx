@@ -27,7 +27,7 @@ function LoginForm() {
     try {
       const res = await authApi.login(email, password)
       setAuth(res.data.token, res.data.user)
-      const next = searchParams.get('next') || '/documents'
+      const next = searchParams.get('next') || '/dashboard'
       router.push(next)
     } catch (err: any) {
       setError(err.message || 'Login gagal. Periksa email dan password.')

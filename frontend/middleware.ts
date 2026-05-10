@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PROTECTED_ROUTES = ['/documents', '/sessions', '/analysis', '/similarity']
+const PROTECTED_ROUTES = ['/dashboard', '/documents', '/sessions', '/analysis', '/similarity']
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value
@@ -19,5 +19,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/documents/:path*', '/sessions/:path*', '/analysis/:path*', '/similarity/:path*'],
+  matcher: ['/dashboard/:path*', '/documents/:path*', '/sessions/:path*', '/analysis/:path*', '/similarity/:path*'],
 }

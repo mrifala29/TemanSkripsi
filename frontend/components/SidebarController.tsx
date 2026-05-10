@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import AppSidebar from './AppSidebar'
 
-const APP_ROUTES = ['/documents', '/sessions', '/analysis', '/similarity']
+const APP_ROUTES = ['/dashboard', '/documents', '/sessions', '/analysis', '/similarity']
 
 export default function SidebarController({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

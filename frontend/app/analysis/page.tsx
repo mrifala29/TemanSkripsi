@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { api } from '@/lib/api'
 import Link from 'next/link'
-import Image from 'next/image'
 
 type Analysis = {
   id: string
@@ -23,141 +22,70 @@ type Score = {
   feedback: string
 }
 
-const STEPS = [
-  { num: '01', icon: '📤', title: 'Upload Skripsi', desc: 'Upload PDF skripsimu ke sistem' },
-  { num: '02', icon: '🔍', title: 'AI Membaca', desc: 'AI menganalisis seluruh konten dokumen' },
-  { num: '03', icon: '📊', title: 'Penilaian per Aspek', desc: 'Skor per aspek: metode, data, analisis, dst.' },
-  { num: '04', icon: '💡', title: 'Feedback Detail', desc: 'Terima saran spesifik untuk perbaikan' },
-]
+type Document = {
+  id: string
+  file_name: string
+  title: string | null
+  parse_status: string
+}
 
-const DEMO_SCORES = [
-  { label: 'Metode Penelitian', score: 82, color: 'bg-emerald-500' },
-  { label: 'Kajian Pustaka', score: 75, color: 'bg-indigo-500' },
-  { label: 'Analisis Data', score: 68, color: 'bg-amber-400' },
-  { label: 'Penarikan Kesimpulan', score: 85, color: 'bg-emerald-500' },
-  { label: 'Orisinalitas', score: 79, color: 'bg-indigo-400' },
-]
+function DocumentPicker() {
+  const router = useRouter()
+  const [docs, setDocs] = useState<Document[]>([])
+  const [loading, setLoading] = useState(true)
 
-function AnalysisLanding() {
+  useEffect(() => {
+    api.getDocuments()
+      .then(res => setDocs((res.data || []).filter((d: Document) => d.parse_status === 'done')))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-600 to-emerald-700 pt-16 pb-24 px-6">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.06)_1px,transparent_0)] bg-[size:32px_32px]" />
-        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/5 blur-3xl pointer-events-none" />
-        <div className="relative z-10 max-w-4xl mx-auto flex flex-col lg:flex-row items-center gap-10">
-          <div className="flex-1 text-center lg:text-left">
-            <span className="inline-flex items-center gap-2 bg-white/15 border border-white/20 text-white text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
-              <span className="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse" />
-              Analisa Skripsi
-            </span>
-            <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight">
-              Analisa Mendalam<br />
-              <span className="text-emerald-200">Skripsimu dengan AI</span>
-            </h1>
-            <p className="text-emerald-100 text-base mb-8 leading-relaxed max-w-lg">
-              Dapatkan nilai dan feedback spesifik untuk setiap bagian skripsimu — metode, kajian pustaka, analisis data, hingga kesimpulan.
-            </p>
-            <Link href="/auth/login" className="inline-block bg-white text-emerald-700 font-bold px-8 py-3.5 rounded-xl hover:bg-emerald-50 transition-all hover:scale-105 shadow-lg">
-              📊 Analisa Skripsimu Sekarang
-            </Link>
-          </div>
-          <div className="flex-shrink-0 w-44 lg:w-52 opacity-90">
-            <motion.div animate={{ y: [0, -14, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
-              <Image src="/mascot.png" alt="Maskot" width={260} height={260} className="w-full drop-shadow-2xl" />
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Cara Kerja */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">Cara Kerja Analisa</h2>
-            <p className="text-gray-500">Dari upload sampai feedback dalam hitungan menit</p>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 relative">
-            <div className="hidden lg:block absolute top-8 left-[12.5%] right-[12.5%] h-0.5 bg-emerald-100" />
-            {STEPS.map((s, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="text-center relative">
-                <div className="w-16 h-16 bg-white border-2 border-emerald-200 rounded-2xl flex flex-col items-center justify-center mx-auto mb-4 gap-0.5 relative z-10 shadow-sm">
-                  <span className="text-xl">{s.icon}</span>
-                  <span className="text-emerald-600 font-bold text-xs">{s.num}</span>
-                </div>
-                <h3 className="font-bold text-gray-900 mb-1.5 text-sm">{s.title}</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">{s.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Contoh Hasil Analisa */}
-      <section className="py-20 px-6 bg-gray-50">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Contoh Hasil Analisa</h2>
-            <p className="text-gray-400 text-sm">Skor per aspek dan feedback detail seperti ini</p>
-          </div>
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
-            <div className="bg-emerald-600 px-6 py-4 flex items-center justify-between">
-              <div>
-                <p className="text-white font-semibold">Laporan Analisa Skripsi</p>
-                <p className="text-emerald-100 text-xs mt-0.5">Analisis AI · 5 aspek</p>
-              </div>
-              <div className="text-center">
-                <p className="text-4xl font-extrabold text-white">78</p>
-                <p className="text-emerald-200 text-xs">/ 100</p>
-              </div>
-            </div>
-            <div className="p-6 space-y-4">
-              {DEMO_SCORES.map((s, i) => (
-                <motion.div key={i} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-sm text-gray-700">{s.label}</p>
-                    <p className="text-sm font-bold text-gray-900">{s.score}<span className="text-gray-400 font-normal">/100</span></p>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${s.score}%` }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.07 + 0.2, duration: 0.6 }}
-                      className={`${s.color} h-2 rounded-full`}
-                    />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50">
-              <Link href="/auth/login" className="block text-center bg-emerald-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-emerald-700 transition-colors">
-                Lihat Analisa Lengkap →
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16 px-6 bg-white">
-        <motion.div initial={{ opacity: 0, scale: 0.97 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="max-w-2xl mx-auto text-center bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl p-10 shadow-xl shadow-emerald-200">
-          <div className="text-4xl mb-3">📊</div>
-          <h2 className="text-2xl font-bold text-white mb-3">Tahu seberapa siap skripsimu?</h2>
-          <p className="text-emerald-100 text-sm mb-6">Upload dan dapatkan laporan analisa lengkap dengan skor dan feedback AI.</p>
-          <Link href="/auth/login" className="inline-block bg-white text-emerald-700 font-bold px-8 py-3 rounded-xl hover:bg-emerald-50 transition-all hover:scale-105">
-            Mulai Analisa →
+    <div className="max-w-2xl mx-auto px-6 py-10">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">📊 Analisa Skripsi</h1>
+        <p className="text-gray-500 mt-1">Pilih dokumen untuk melihat atau menjalankan analisa AI.</p>
+      </div>
+      {docs.length === 0 ? (
+        <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
+          <div className="text-4xl mb-3">📂</div>
+          <p className="text-gray-600 font-medium">Belum ada dokumen yang siap</p>
+          <p className="text-sm text-gray-400 mt-1 mb-5">Upload dan proses dokumen terlebih dahulu.</p>
+          <Link href="/documents" className="inline-flex items-center gap-1.5 bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
+            + Upload Dokumen
           </Link>
-        </motion.div>
-      </section>
-
-      <footer className="py-6 px-6 text-center border-t border-gray-100">
-        <p className="text-xs text-gray-400">© 2026 TemanSkripsi · <Link href="/" className="hover:text-emerald-600">Kembali ke Beranda</Link></p>
-      </footer>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {docs.map((doc, i) => (
+            <motion.button
+              key={doc.id}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+              onClick={() => router.push(`/analysis?doc=${doc.id}`)}
+              className="w-full text-left bg-white border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30 rounded-xl px-5 py-4 transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">📄</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-900 truncate">{doc.title || doc.file_name}</p>
+                  {doc.title && <p className="text-xs text-gray-400 truncate mt-0.5">{doc.file_name}</p>}
+                </div>
+                <span className="text-emerald-400 group-hover:text-emerald-600 transition-colors flex-shrink-0">→</span>
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
-
 
 function AnalysisContent() {
   const searchParams = useSearchParams()
@@ -168,25 +96,28 @@ function AnalysisContent() {
   const [scores, setScores] = useState<Score[]>([])
   const [loading, setLoading] = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
-    if (token) {
-      setIsLoggedIn(true)
-      loadAnalyses()
-    } else {
-      setLoading(false)
-    }
-  }, [])
+    if (!docId) { setLoading(false); return }
+    loadAnalyses()
+  }, [docId])
 
   async function loadAnalyses() {
     setLoading(true)
     try {
       const res = await api.getAnalyses()
-      const data = res.data || []
-      setAnalyses(data)
-      if (data.length > 0) setSelected(data[0])
+      const data: Analysis[] = res.data || []
+      const filtered = docId ? data.filter(a => a.document_id === docId) : data
+      setAnalyses(filtered)
+      if (filtered.length > 0) {
+        const first = filtered[0]
+        setSelected(first)
+        // Fetch scores for this analysis
+        try {
+          const sRes = await (api as any).getAnalysisScores?.(first.id)
+          if (sRes?.data) setScores(sRes.data)
+        } catch { /* scores endpoint may not exist yet */ }
+      }
     } catch (e) {
       console.error(e)
     } finally {
@@ -214,117 +145,129 @@ function AnalysisContent() {
     return 'text-red-500'
   }
 
-  const scoreBar = (score: number, max: number) => {
+  const scoreBg = (score: number, max: number) => {
     const pct = Math.round((score / max) * 100)
-    const bg = pct >= 80 ? 'bg-emerald-500' : pct >= 60 ? 'bg-amber-400' : 'bg-red-500'
-    return (
-      <div className="w-full bg-gray-100 rounded-full h-2 mt-1.5">
-        <div className={`${bg} h-2 rounded-full transition-all`} style={{ width: `${pct}%` }} />
-      </div>
-    )
+    return pct >= 80 ? 'bg-emerald-500' : pct >= 60 ? 'bg-amber-400' : 'bg-red-500'
   }
 
-  if (!isLoggedIn && !loading) return <AnalysisLanding />
-  if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+  // No docId → document picker
+  if (!docId && !loading) return <DocumentPicker />
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">📊 Analisa Skripsi</h1>
-          <p className="text-gray-500 mt-1">Lihat skor dan feedback dari AI untuk dokumenmu</p>
+          <p className="text-gray-500 mt-1 text-sm">Skor dan feedback AI untuk dokumenmu</p>
         </div>
-        {docId && (
+        <div className="flex gap-2">
+          <Link href="/analysis" className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 px-3 py-2 rounded-lg transition-colors">
+            ← Pilih Dokumen
+          </Link>
           <button
             onClick={runAnalysis}
             disabled={analyzing}
-            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            {analyzing ? 'Menganalisa...' : '🔍 Analisa Dokumen'}
+            {analyzing ? '⏳ Menganalisa...' : '🔍 Analisa Sekarang'}
           </button>
-        )}
+        </div>
       </div>
 
-      {selected && (
+      {analyses.length === 0 ? (
+        <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
+          <div className="text-4xl mb-3">📊</div>
+          <p className="text-gray-600 font-medium">Belum ada analisa</p>
+          <p className="text-sm text-gray-400 mt-1 mb-5">Klik "Analisa Sekarang" untuk mulai.</p>
+          <button
+            onClick={runAnalysis}
+            disabled={analyzing}
+            className="inline-flex items-center gap-1.5 bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+          >
+            {analyzing ? '⏳ Menganalisa...' : '🔍 Mulai Analisa'}
+          </button>
+        </div>
+      ) : (
         <div className="space-y-6">
-          {/* Overall score */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Skor Keseluruhan</p>
-                <p className={`text-5xl font-bold mt-1 ${scoreColor(selected.overall_score || 0, 100)}`}>
-                  {selected.overall_score ?? '—'}
-                  <span className="text-xl text-gray-400">/100</span>
-                </p>
-              </div>
-              <div className="text-right">
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  selected.status === 'done' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
-                  {selected.status}
-                </span>
-                <p className="text-xs text-gray-400 mt-1">
-                  {new Date(selected.created_at).toLocaleDateString('id-ID')}
-                </p>
-              </div>
-            </div>
-            {selected.summary && (
-              <p className="mt-4 text-sm text-gray-600 bg-gray-50 rounded-lg p-4 leading-relaxed border border-gray-100">
-                {selected.summary}
-              </p>
-            )}
-          </div>
 
-          {/* Score breakdown */}
-          {scores.length > 0 && (
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <h2 className="font-semibold text-gray-900 mb-4">Rincian Skor</h2>
-              <div className="space-y-4">
-                {scores.map((s, i) => (
-                  <div key={i}>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-gray-700">{s.category}</p>
-                      <p className={`text-sm font-semibold ${scoreColor(s.score, s.max_score)}`}>
-                        {s.score}/{s.max_score}
-                      </p>
-                    </div>
-                    {scoreBar(s.score, s.max_score)}
-                    {s.feedback && (
-                      <p className="text-xs text-gray-400 mt-1">{s.feedback}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
+          {/* Multi-analysis selector */}
+          {analyses.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {analyses.map((a, i) => (
+                <button
+                  key={a.id}
+                  onClick={() => setSelected(a)}
+                  className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                    selected?.id === a.id ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300'
+                  }`}
+                >
+                  Analisa #{i + 1} · {new Date(a.created_at).toLocaleDateString('id-ID')}
+                </button>
+              ))}
             </div>
           )}
-        </div>
-      )}
 
-      {/* List of analyses */}
-      {analyses.length > 1 && (
-        <div className="mt-6 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">Riwayat Analisa</h2>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {analyses.map(a => (
-              <button
-                key={a.id}
-                onClick={() => setSelected(a)}
-                className={`w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors ${selected?.id === a.id ? 'bg-indigo-50' : ''}`}
-              >
+          {selected && (
+            <>
+              {/* Overall score */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-800">{a.id.slice(0, 8)}...</p>
-                  <p className={`text-lg font-bold ${scoreColor(a.overall_score || 0, 100)}`}>
-                    {a.overall_score ?? '—'}
-                  </p>
+                  <div>
+                    <p className="text-sm text-gray-500">Skor Keseluruhan</p>
+                    <p className={`text-5xl font-bold mt-1 ${scoreColor(selected.overall_score || 0, 100)}`}>
+                      {selected.overall_score ?? '—'}
+                      <span className="text-xl text-gray-400">/100</span>
+                    </p>
+                  </div>
+                  <span className={`text-xs px-2.5 py-1 rounded-full border ${
+                    selected.status === 'done' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    {selected.status === 'done' ? '✅ Selesai' : '⏳ ' + selected.status}
+                  </span>
                 </div>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {new Date(a.created_at).toLocaleDateString('id-ID')}
-                </p>
-              </button>
-            ))}
-          </div>
+                {selected.summary && (
+                  <p className="mt-4 text-sm text-gray-600 bg-gray-50 rounded-lg p-4 leading-relaxed border border-gray-100">
+                    {selected.summary}
+                  </p>
+                )}
+              </div>
+
+              {/* Score breakdown */}
+              {scores.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                  <h2 className="font-semibold text-gray-900 mb-4">Rincian Skor</h2>
+                  <div className="space-y-4">
+                    {scores.map((s, i) => (
+                      <div key={i}>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm text-gray-700">{s.category}</p>
+                          <p className={`text-sm font-semibold ${scoreColor(s.score, s.max_score)}`}>
+                            {s.score}/{s.max_score}
+                          </p>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2">
+                          <div className={`${scoreBg(s.score, s.max_score)} h-2 rounded-full transition-all`}
+                            style={{ width: `${Math.round((s.score / s.max_score) * 100)}%` }} />
+                        </div>
+                        {s.feedback && <p className="text-xs text-gray-400 mt-1">{s.feedback}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selected.status === 'processing' && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700 text-center">
+                  ⏳ Analisa sedang diproses. Halaman akan diperbarui otomatis.
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>

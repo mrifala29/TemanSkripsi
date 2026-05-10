@@ -55,6 +55,8 @@ export const api = {
     fetchAPI('/documents', { method: 'POST', body: formData }),
   deleteDocument: (id: string) =>
     fetchAPI(`/documents/${id}`, { method: 'DELETE' }),
+  updateDocument: (id: string, data: { title?: string; doc_type?: string }) =>
+    fetchAPI(`/documents/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   // Sessions
   getSessions: () => fetchAPI('/sessions'),
@@ -71,10 +73,26 @@ export const api = {
       body: JSON.stringify({ content }),
     }),
 
+  // Parse
+  parseDocument: (id: string) =>
+    fetchAPI(`/documents/${id}/parse`, { method: 'POST' }),
+
   // Analysis
   getAnalyses: () => fetchAPI('/analyses'),
   analyzeDocument: (documentId: string) =>
     fetchAPI(`/documents/${documentId}/analyze`, { method: 'POST' }),
+
+  // Similarity
+  getSimilarityChecks: () => fetchAPI('/similarity-checks'),
+  checkSimilarity: (documentId: string) =>
+    fetchAPI(`/documents/${documentId}/similarity-check`, { method: 'POST' }),
+
+  // Credits
+  getCredits: () => fetchAPI('/credits'),
+  getCreditTransactions: (params?: { limit?: number }) => {
+    const qs = params?.limit ? `?limit=${params.limit}` : ''
+    return fetchAPI(`/credits/transactions${qs}`)
+  },
 
   // Health
   health: () => fetchAPI('/health'),
