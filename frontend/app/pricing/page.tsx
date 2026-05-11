@@ -271,7 +271,7 @@ export default function PricingPage() {
       <section className="py-20 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Per Fitur</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Paket Harga</h2>
             <p className="text-sm text-gray-500">
               Pilih fitur yang kamu butuhkan, lalu pilih jenis dokumen — PPT atau skripsi lengkap.
             </p>

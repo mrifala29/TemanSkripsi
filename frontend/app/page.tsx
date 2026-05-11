@@ -569,7 +569,7 @@ export default function Home() {
       </section>
 
       {/* ── SUPPORTED MAJORS ──────────────────────────────── */}
-      <section className="py-20 px-6 bg-gray-50">
+      <section className="py-20 px-6 bg-white-50">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
             <span className="inline-block bg-emerald-100 border border-emerald-300 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-lg mb-4">✅ Tersedia Sekarang</span>
@@ -642,7 +642,7 @@ export default function Home() {
       </section>
 
       {/* ── CTA BOTTOM ────────────────────────────────────── */}
-      <section className="py-20 px-6 bg-white">
+      <section className="py-20 px-6 bg-gray-50">
         <motion.div initial={{ opacity: 0, scale: 0.97 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="max-w-2xl mx-auto text-center bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-3xl p-12 shadow-xl shadow-indigo-200">
           <div className="text-5xl mb-4">🎓</div>
           <h2 className="text-3xl font-bold text-white mb-4">Persiapan Sidang Dimulai dari Sini</h2>
