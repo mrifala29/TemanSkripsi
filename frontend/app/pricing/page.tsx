@@ -1,166 +1,250 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
-const SATUAN = [
+type DocType = 'ppt' | 'fulltext'
+
+type Variant = {
+  priceLabel: string
+  limit: string
+  guarantee: string
+  features: string[]
+}
+
+type Feature = {
+  key: string
+  icon: string
+  name: string
+  desc: string
+  howItWorks: string
+  hasBothTypes: boolean
+  ppt: Variant | null
+  fulltext: Variant
+}
+
+const FEATURES: Feature[] = [
   {
+    key: 'simulasi',
     icon: '🎤',
-    name: 'Simulasi PPT',
-    desc: 'Latihan sidang dari slide presentasi',
-    price: 'IDR 15.000',
-    limit: 'Maks 50 slide',
-    guarantee: 'Min. 5 tanya-jawab',
-    features: [
-      '✓ 1 sesi simulasi penuh',
-      '✓ AI dosen penguji kritis',
-      '✓ Pertanyaan berbasis isi slide',
-      '✓ Maks 50 slide PPT/PPTX',
-      '✓ Jaminan min. 5 tanya-jawab',
-    ],
-    color: 'border-gray-200',
-    button: 'bg-indigo-600 text-white hover:bg-indigo-700',
+    name: 'Simulasi Sidang',
+    desc: 'Latihan tanya-jawab dengan AI dosen penguji',
+    howItWorks: 'AI bertanya → kamu jawab → AI evaluasi + tanya lanjutan (berulang)',
+    hasBothTypes: true,
+    ppt: {
+      priceLabel: 'IDR 15.000',
+      limit: 'Maks 50 slide PPT/PPTX',
+      guarantee: 'Min. 5 putaran tanya-jawab',
+      features: [
+        '1 sesi simulasi penuh',
+        'Pertanyaan berbasis isi slide',
+        'AI evaluasi jawaban + follow-up tiap giliran',
+        'Maks 50 slide PPT/PPTX',
+        'Jaminan min. 5 putaran',
+      ],
+    },
+    fulltext: {
+      priceLabel: 'IDR 25.000',
+      limit: 'Maks 100 halaman PDF',
+      guarantee: 'Min. 10 putaran tanya-jawab',
+      features: [
+        '1 sesi simulasi penuh',
+        'Pertanyaan mendalam per bab skripsi',
+        'AI evaluasi jawaban + follow-up tiap giliran',
+        'Maks 100 halaman PDF',
+        'Jaminan min. 10 putaran',
+      ],
+    },
   },
   {
-    icon: '📄',
-    name: 'Simulasi Fulltext',
-    desc: 'Latihan sidang dari skripsi lengkap',
-    price: 'IDR 25.000',
-    limit: 'Maks 100 halaman',
-    guarantee: 'Min. 10 tanya-jawab',
-    features: [
-      '✓ 1 sesi simulasi penuh',
-      '✓ AI dosen penguji kritis',
-      '✓ Pertanyaan mendalam per bab',
-      '✓ Maks 100 halaman PDF',
-      '✓ Jaminan min. 10 tanya-jawab',
-    ],
-    color: 'border-gray-200',
-    button: 'bg-indigo-600 text-white hover:bg-indigo-700',
-  },
-  {
+    key: 'analisa',
     icon: '📊',
-    name: 'Analisa PPT',
-    desc: 'Skor & feedback dari slide presentasi',
-    price: 'IDR 10.000',
-    limit: 'Maks 50 slide',
-    guarantee: 'Skor 6 aspek',
-    features: [
-      '✓ Skor per aspek (0–100)',
-      '✓ Feedback konkret per aspek',
-      '✓ Identifikasi kelemahan utama',
-      '✓ Maks 50 slide PPT/PPTX',
-    ],
-    color: 'border-gray-200',
-    button: 'bg-indigo-600 text-white hover:bg-indigo-700',
+    name: 'Analisa & Penilaian',
+    desc: 'Skor 6 aspek skripsi + feedback dari AI',
+    howItWorks: 'Hasil dalam 1–3 menit setelah dokumen diproses',
+    hasBothTypes: true,
+    ppt: {
+      priceLabel: 'IDR 10.000',
+      limit: 'Maks 50 slide PPT/PPTX',
+      guarantee: 'Skor 6 aspek + feedback',
+      features: [
+        'Skor per aspek 0–100',
+        'Feedback konkret tiap aspek',
+        'Identifikasi kelemahan utama',
+        'Maks 50 slide PPT/PPTX',
+      ],
+    },
+    fulltext: {
+      priceLabel: 'IDR 20.000',
+      limit: 'Maks 100 halaman PDF',
+      guarantee: 'Skor + potensi pertanyaan sidang',
+      features: [
+        'Skor per aspek 0–100',
+        'Feedback konkret tiap aspek',
+        'Potensi pertanyaan sidang',
+        'Saran perbaikan spesifik',
+        'Maks 100 halaman PDF',
+      ],
+    },
   },
   {
-    icon: '📝',
-    name: 'Analisa Fulltext',
-    desc: 'Penilaian menyeluruh skripsi lengkap',
-    price: 'IDR 20.000',
-    limit: 'Maks 100 halaman',
-    guarantee: 'Skor 6 aspek + potensi pertanyaan',
-    features: [
-      '✓ Skor per aspek (0–100)',
-      '✓ Feedback konkret per aspek',
-      '✓ Potensi pertanyaan sidang',
-      '✓ Saran perbaikan spesifik',
-      '✓ Maks 100 halaman PDF',
-    ],
-    color: 'border-indigo-200 bg-indigo-50/30',
-    button: 'bg-indigo-600 text-white hover:bg-indigo-700',
-  },
-  {
+    key: 'kesamaan',
     icon: '🔍',
     name: 'Cek Kesamaan',
     desc: 'Laporan kemiripan dengan koleksi di sistem',
-    price: 'IDR 5.000',
-    limit: 'Maks 100 halaman',
-    guarantee: 'Persentase kemiripan overall',
-    features: [
-      '✓ Persentase kemiripan overall',
-      '✓ Bagian yang paling mirip',
-      '✓ Dibanding dokumen lain di sistem',
-      '✓ Maks 100 halaman PDF',
-    ],
-    color: 'border-gray-200',
-    button: 'bg-indigo-600 text-white hover:bg-indigo-700',
+    howItWorks: 'Perbandingan internal — bukan vs internet',
+    hasBothTypes: false,
+    ppt: null,
+    fulltext: {
+      priceLabel: 'IDR 5.000',
+      limit: 'Maks 100 halaman PDF',
+      guarantee: 'Persentase + bagian paling mirip',
+      features: [
+        'Persentase kemiripan overall',
+        'Bagian teks yang paling mirip',
+        'Dibanding dokumen lain di sistem',
+        'Maks 100 halaman PDF',
+      ],
+    },
   },
 ]
 
-const BUNDLING = [
+type Bundle = {
+  icon: string
+  name: string
+  desc: string
+  badge?: string
+  ppt: { priceLabel: string; normalLabel: string; save: string; includes: string[] }
+  fulltext: { priceLabel: string; normalLabel: string; save: string; includes: string[] }
+}
+
+const BUNDLES: Bundle[] = [
   {
-    icon: '🎯',
-    name: 'Paket Sidang PPT',
-    desc: 'Untuk yang presentasi pakai slide',
-    price: 'IDR 20.000',
-    normalPrice: 'IDR 25.000',
-    save: 'Hemat 20%',
-    includes: ['1x Simulasi PPT (15rb)', '1x Analisa PPT (10rb)'],
-    color: 'border-gray-200',
-    button: 'bg-indigo-600 text-white hover:bg-indigo-700',
+    icon: '🔎',
+    name: 'Sidang + Cek Kesamaan',
+    desc: 'Latihan sidang & periksa originalitas dokumen',
+    ppt: {
+      priceLabel: 'IDR 17.000',
+      normalLabel: 'IDR 20.000',
+      save: 'Hemat 15%',
+      includes: ['1× Simulasi PPT', '1× Cek Kesamaan'],
+    },
+    fulltext: {
+      priceLabel: 'IDR 25.000',
+      normalLabel: 'IDR 30.000',
+      save: 'Hemat 17%',
+      includes: ['1× Simulasi Fulltext', '1× Cek Kesamaan'],
+    },
   },
   {
-    icon: '📄',
-    name: 'Paket Sidang Fulltext',
-    desc: 'Untuk yang ingin analisa mendalam',
-    price: 'IDR 35.000',
-    normalPrice: 'IDR 45.000',
-    save: 'Hemat 22%',
-    includes: ['1x Simulasi Fulltext (25rb)', '1x Analisa Fulltext (20rb)'],
-    color: 'border-gray-200',
-    button: 'bg-indigo-600 text-white hover:bg-indigo-700',
+    icon: '🎯',
+    name: 'Sidang + Analisa',
+    desc: 'Latihan sidang & temukan kelemahan skripsi',
+    badge: 'REKOMENDASI',
+    ppt: {
+      priceLabel: 'IDR 20.000',
+      normalLabel: 'IDR 25.000',
+      save: 'Hemat 20%',
+      includes: ['1× Simulasi PPT', '1× Analisa PPT'],
+    },
+    fulltext: {
+      priceLabel: 'IDR 35.000',
+      normalLabel: 'IDR 45.000',
+      save: 'Hemat 22%',
+      includes: ['1× Simulasi Fulltext', '1× Analisa Fulltext'],
+    },
   },
   {
     icon: '⭐',
     name: 'Paket Lengkap',
-    desc: 'Semua fitur dalam satu paket',
-    price: 'IDR 42.000',
-    normalPrice: 'IDR 50.000',
-    save: 'Hemat 16%',
-    includes: ['1x Simulasi Fulltext (25rb)', '1x Analisa Fulltext (20rb)', '1x Cek Kesamaan (5rb)'],
-    color: 'border-indigo-200 bg-indigo-50/50 shadow-lg shadow-indigo-100',
-    button: 'bg-indigo-600 text-white hover:bg-indigo-700',
-    badge: 'REKOMENDASI',
-  },
-  {
-    icon: '🚀',
-    name: 'Paket Intensif',
-    desc: 'Latihan sebelum & sesudah revisi',
-    price: 'IDR 58.000',
-    normalPrice: 'IDR 75.000',
-    save: 'Hemat 23%',
-    includes: ['2x Simulasi Fulltext (50rb)', '1x Analisa Fulltext (20rb)', '1x Cek Kesamaan (5rb)'],
-    color: 'border-gray-200',
-    button: 'bg-indigo-600 text-white hover:bg-indigo-700',
+    desc: 'Semua fitur sekaligus — persiapan maksimal',
+    ppt: {
+      priceLabel: 'IDR 24.000',
+      normalLabel: 'IDR 30.000',
+      save: 'Hemat 20%',
+      includes: ['1× Simulasi PPT', '1× Analisa PPT', '1× Cek Kesamaan'],
+    },
+    fulltext: {
+      priceLabel: 'IDR 39.000',
+      normalLabel: 'IDR 50.000',
+      save: 'Hemat 22%',
+      includes: ['1× Simulasi Fulltext', '1× Analisa Fulltext', '1× Cek Kesamaan'],
+    },
   },
 ]
 
 const FAQ = [
   {
-    q: 'Apa itu sistem kredit?',
-    a: 'Kamu membeli kredit sesuai fitur yang dibutuhkan. Kredit disimpan di akunmu dan tidak ada masa kedaluwarsa — dipakai kapan saja.',
+    q: 'Apa itu "putaran tanya-jawab" di simulasi?',
+    a: 'Satu putaran = AI mengajukan pertanyaan → kamu menjawab → AI mengevaluasi jawabanmu sekaligus mengajukan pertanyaan lanjutan. Siklus ini berulang hingga kamu mengakhiri sesi. Jadi di setiap giliran, kamu mendapat evaluasi DAN pertanyaan baru.',
+  },
+  {
+    q: 'Apa bedanya PPT dan Fulltext?',
+    a: 'PPT (slide sidang): cocok untuk latihan cepat atau jika skripsi belum final. AI membaca isi slide. Fulltext (PDF skripsi lengkap): analisis jauh lebih mendalam karena AI membaca seluruh isi skripsi per bab.',
   },
   {
     q: 'Kenapa ada batas halaman/slide?',
-    a: 'Dokumen sangat tebal membutuhkan lebih banyak waktu dan biaya AI untuk diproses. Batas ini menjaga kualitas layanan dan keterjangkauan harga.',
+    a: 'Dokumen tebal membutuhkan lebih banyak waktu dan biaya AI untuk diproses. Batas ini menjaga kualitas layanan dan harga tetap terjangkau. Mayoritas skripsi S1 (60–90 halaman) masuk dalam batas 100 halaman.',
   },
   {
-    q: 'Apa yang dijamin di "min. N tanya-jawab"?',
+    q: 'Apa itu sistem kredit?',
+    a: 'Kredit disimpan per fitur di akunmu — tidak ada masa kedaluwarsa. Beli sesuai kebutuhan, gunakan kapan saja. Kredit Simulasi tidak bisa dipakai untuk Analisa, dan sebaliknya.',
+  },
+  {
+    q: 'Apa yang dijamin di "min. N putaran"?',
     a: 'Jika sesi terputus karena error dari sistem kami sebelum mencapai minimum, kredit akan dikembalikan penuh ke akunmu.',
   },
   {
-    q: 'Apakah ada trial gratis?',
-    a: 'Ya! Setiap akun baru mendapat 1 sesi Simulasi PPT gratis sebagai bonus registrasi. Tidak perlu memasukkan kartu kredit.',
-  },
-  {
-    q: 'Apakah cek kesamaan sama seperti Turnitin?',
-    a: 'Tidak. Cek kesamaan kami membandingkan skripsimu dengan dokumen lain yang ada di sistem TemanSkripsi. Ini alat bantu internal, bukan pengganti Turnitin.',
+    q: 'Cek kesamaan sama seperti Turnitin?',
+    a: 'Tidak. Cek kami membandingkan skripsimu dengan dokumen lain yang ada di sistem TemanSkripsi — bukan vs internet. Ini alat bantu kewaspadaan internal, bukan pengganti Turnitin.',
   },
 ]
 
+function Toggle({
+  value,
+  onChange,
+}: {
+  value: DocType
+  onChange: (v: DocType) => void
+}) {
+  return (
+    <div className="inline-flex items-center bg-gray-100 rounded-lg p-0.5 text-xs font-semibold">
+      <button
+        onClick={() => onChange('ppt')}
+        className={`px-3 py-1.5 rounded-md transition-all duration-200 ${
+          value === 'ppt'
+            ? 'bg-white text-indigo-700 shadow-sm'
+            : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        📊 PPT
+      </button>
+      <button
+        onClick={() => onChange('fulltext')}
+        className={`px-3 py-1.5 rounded-md transition-all duration-200 ${
+          value === 'fulltext'
+            ? 'bg-white text-indigo-700 shadow-sm'
+            : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        📄 Fulltext
+      </button>
+    </div>
+  )
+}
+
 export default function PricingPage() {
+  const [featureTypes, setFeatureTypes] = useState<Record<string, DocType>>({
+    simulasi: 'fulltext',
+    analisa: 'fulltext',
+  })
+  const [bundleType, setBundleType] = useState<DocType>('fulltext')
+
+  function setFType(key: string, v: DocType) {
+    setFeatureTypes((prev) => ({ ...prev, [key]: v }))
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* ── HERO ── */}
@@ -183,44 +267,94 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ── SATUAN ── */}
+      {/* ── PER FITUR ── */}
       <section className="py-20 px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Per Fitur (Satuan)</h2>
-            <p className="text-sm text-gray-500">Cocok jika kamu hanya butuh satu jenis bantuan</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Per Fitur</h2>
+            <p className="text-sm text-gray-500">
+              Pilih fitur yang kamu butuhkan, lalu pilih jenis dokumen — PPT atau skripsi lengkap.
+            </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
-            {SATUAN.map((p, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.07 }}
-                className={`border ${p.color} rounded-2xl p-6 flex flex-col hover:-translate-y-1 transition-all duration-300`}
-              >
-                <div className="text-3xl mb-3">{p.icon}</div>
-                <h3 className="text-base font-bold text-gray-900 mb-1">{p.name}</h3>
-                <p className="text-xs text-gray-500 mb-1">{p.desc}</p>
-                <p className="text-xs text-indigo-600 font-medium mb-4">{p.limit} · {p.guarantee}</p>
-                <div className="mb-4 pb-4 border-b border-gray-100">
-                  <p className="text-2xl font-extrabold text-gray-900">{p.price}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">per penggunaan</p>
-                </div>
-                <ul className="space-y-2 mb-6 flex-1">
-                  {p.features.map((f, j) => (
-                    <li key={j} className="text-xs text-gray-600">{f}</li>
-                  ))}
-                </ul>
-                <Link
-                  href="/auth/login"
-                  className={`block text-center w-full px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${p.button}`}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {FEATURES.map((feature, i) => {
+              const selectedType = feature.hasBothTypes ? featureTypes[feature.key] : 'fulltext'
+              const variant = selectedType === 'ppt' && feature.ppt ? feature.ppt : feature.fulltext
+
+              return (
+                <motion.div
+                  key={feature.key}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className="border border-gray-200 rounded-2xl p-6 flex flex-col hover:-translate-y-1 transition-all duration-300"
                 >
-                  Beli Kredit
-                </Link>
-              </motion.div>
-            ))}
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-2 mb-4">
+                    <div>
+                      <div className="text-3xl mb-1">{feature.icon}</div>
+                      <h3 className="text-base font-bold text-gray-900">{feature.name}</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">{feature.desc}</p>
+                    </div>
+                    {feature.hasBothTypes && (
+                      <Toggle
+                        value={featureTypes[feature.key]}
+                        onChange={(v) => setFType(feature.key, v)}
+                      />
+                    )}
+                  </div>
+
+                  {/* How it works */}
+                  <p className="text-xs text-indigo-600 bg-indigo-50 rounded-lg px-3 py-2 mb-4 leading-relaxed">
+                    💡 {feature.howItWorks}
+                  </p>
+
+                  {/* Price — animated on switch */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`${feature.key}-${selectedType}`}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.15 }}
+                      className="mb-4 pb-4 border-b border-gray-100"
+                    >
+                      <p className="text-3xl font-extrabold text-gray-900">{variant.priceLabel}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{variant.limit}</p>
+                      <p className="text-xs text-indigo-600 font-medium mt-1">{variant.guarantee}</p>
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Features */}
+                  <AnimatePresence mode="wait">
+                    <motion.ul
+                      key={`${feature.key}-${selectedType}-list`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="space-y-2 mb-6 flex-1"
+                    >
+                      {variant.features.map((f, j) => (
+                        <li key={j} className="text-xs text-gray-600 flex items-start gap-1.5">
+                          <span className="text-indigo-400 mt-0.5 flex-shrink-0">✓</span>
+                          {f}
+                        </li>
+                      ))}
+                    </motion.ul>
+                  </AnimatePresence>
+
+                  <Link
+                    href="/auth/login"
+                    className="block text-center w-full px-4 py-2.5 rounded-xl font-semibold text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                  >
+                    Beli Kredit
+                  </Link>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -228,50 +362,108 @@ export default function PricingPage() {
       {/* ── BUNDLING ── */}
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Paket Bundling</h2>
-            <p className="text-sm text-gray-500">Hemat lebih banyak dengan kombinasi fitur yang tepat</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {BUNDLING.map((p, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className={`relative border ${p.color} rounded-2xl p-6 flex flex-col hover:-translate-y-1 transition-all duration-300`}
+            <p className="text-sm text-gray-500 mb-6">
+              Kombinasi fitur yang tepat, harga lebih hemat.
+            </p>
+            {/* Global bundle type toggle */}
+            <div className="inline-flex items-center bg-white border border-gray-200 rounded-xl p-1 gap-1 shadow-sm">
+              <button
+                onClick={() => setBundleType('ppt')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  bundleType === 'ppt'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
               >
-                {p.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                      {p.badge}
-                    </span>
-                  </div>
-                )}
-                <div className="text-3xl mb-3">{p.icon}</div>
-                <h3 className="text-base font-bold text-gray-900 mb-1">{p.name}</h3>
-                <p className="text-xs text-gray-500 mb-4">{p.desc}</p>
-                <div className="mb-4 pb-4 border-b border-gray-100">
-                  <p className="text-2xl font-extrabold text-gray-900">{p.price}</p>
-                  <p className="text-xs text-gray-400 line-through mt-0.5">{p.normalPrice}</p>
-                  <span className="inline-block mt-1.5 bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">
-                    {p.save}
-                  </span>
-                </div>
-                <ul className="space-y-1.5 mb-6 flex-1">
-                  {p.includes.map((f, j) => (
-                    <li key={j} className="text-xs text-gray-600">✓ {f}</li>
-                  ))}
-                </ul>
-                <Link
-                  href="/auth/login"
-                  className={`block text-center w-full px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${p.button}`}
+                📊 PPT Sidang
+              </button>
+              <button
+                onClick={() => setBundleType('fulltext')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  bundleType === 'fulltext'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                📄 Fulltext Skripsi
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            {BUNDLES.map((bundle, i) => {
+              const v = bundleType === 'ppt' ? bundle.ppt : bundle.fulltext
+              return (
+                <motion.div
+                  key={bundle.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className={`relative border rounded-2xl p-6 flex flex-col hover:-translate-y-1 transition-all duration-300 ${
+                    bundle.badge
+                      ? 'border-indigo-200 bg-indigo-50/50 shadow-lg shadow-indigo-100'
+                      : 'border-gray-200 bg-white'
+                  }`}
                 >
-                  Beli Paket
-                </Link>
-              </motion.div>
-            ))}
+                  {bundle.badge && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                        {bundle.badge}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="text-3xl mb-2">{bundle.icon}</div>
+                  <h3 className="text-base font-bold text-gray-900 mb-1">{bundle.name}</h3>
+                  <p className="text-xs text-gray-500 mb-4">{bundle.desc}</p>
+
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`${bundle.name}-${bundleType}`}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.15 }}
+                      className="mb-4 pb-4 border-b border-gray-100"
+                    >
+                      <p className="text-2xl font-extrabold text-gray-900">{v.priceLabel}</p>
+                      <p className="text-xs text-gray-400 line-through mt-0.5">{v.normalLabel}</p>
+                      <span className="inline-block mt-1.5 bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                        {v.save}
+                      </span>
+                    </motion.div>
+                  </AnimatePresence>
+
+                  <AnimatePresence mode="wait">
+                    <motion.ul
+                      key={`${bundle.name}-${bundleType}-list`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="space-y-2 mb-6 flex-1"
+                    >
+                      {v.includes.map((item, j) => (
+                        <li key={j} className="text-xs text-gray-600 flex items-start gap-1.5">
+                          <span className="text-indigo-400 mt-0.5 flex-shrink-0">✓</span>
+                          {item}
+                        </li>
+                      ))}
+                    </motion.ul>
+                  </AnimatePresence>
+
+                  <Link
+                    href="/auth/login"
+                    className="block text-center w-full px-4 py-2.5 rounded-xl font-semibold text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                  >
+                    Beli Paket
+                  </Link>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -287,7 +479,7 @@ export default function PricingPage() {
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.07 }}
+                transition={{ delay: i * 0.06 }}
                 className="bg-gray-50 rounded-xl p-6 border border-gray-100"
               >
                 <h3 className="font-semibold text-gray-900 mb-2">{item.q}</h3>

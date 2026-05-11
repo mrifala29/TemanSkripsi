@@ -11,14 +11,14 @@ const TYPING_TEXTS = [
   'Siap Menghadapi Sidang?',
   'Latihan Sekarang, Percaya Diri Nanti.',
   'AI Dosen Penguji — Kapan Saja.',
-  'Nilai Skripsimu Sebelum Hari H.',
+  'Evaluasi Skripsimu Sebelum Hari H.',
 ]
 
 const FEATURES = [
   {
     icon: '🎤',
     title: 'Simulasi Sidang',
-    desc: 'Chat langsung dengan AI dosen penguji kritis. Satu pertanyaan per giliran, persis seperti sidang nyata.',
+    desc: 'Berlatih tanya-jawab dengan AI yang berperan sebagai dosen penguji. Satu pertanyaan per giliran, mengikuti alur sidang sesungguhnya.',
     link: '/simulasi',
     color: 'border-indigo-100 hover:border-indigo-300',
     iconBg: 'bg-indigo-50',
@@ -28,7 +28,7 @@ const FEATURES = [
   {
     icon: '📊',
     title: 'Analisa & Penilaian',
-    desc: 'Skor 0–100 per aspek: latar belakang, metodologi, analisis, konsistensi, hingga kesimpulan.',
+    desc: 'Dapatkan skor 0–100 per aspek: latar belakang, metodologi, analisis data, konsistensi argumen, hingga kesimpulan.',
     link: '/analisa',
     color: 'border-emerald-100 hover:border-emerald-300',
     iconBg: 'bg-emerald-50',
@@ -37,8 +37,8 @@ const FEATURES = [
   },
   {
     icon: '🔍',
-    title: 'Uji Kesamaan & AI',
-    desc: 'Estimasi persentase kemiripan teks dan deteksi konten AI per bab, untuk deteksi dini sebelum sidang.',
+    title: 'Uji Kesamaan & Teks AI',
+    desc: 'Periksa estimasi kemiripan teks dan indikasi konten berbantuan AI per bab — untuk deteksi dini sebelum hari sidang.',
     link: '/plagiasi',
     color: 'border-amber-100 hover:border-amber-300',
     iconBg: 'bg-amber-50',
@@ -49,22 +49,22 @@ const FEATURES = [
 
 const FEATURE_STEPS: Record<string, { icon: string; num: string; title: string; desc: string }[]> = {
   simulasi: [
-    { icon: '📤', num: '01', title: 'Upload Dokumen',     desc: 'Upload PDF atau PPT skripsimu ke sistem' },
-    { icon: '🤖', num: '02', title: 'AI Membaca',         desc: 'AI menganalisis seluruh isi dokumenmu' },
-    { icon: '💬', num: '03', title: 'Sesi Dimulai',        desc: 'AI bertanya layaknya dosen penguji sungguhan' },
-    { icon: '🔁', num: '04', title: 'Penggalian Mendalam', desc: 'Jawaban lemah langsung digali lebih dalam' },
+    { icon: '📤', num: '01', title: 'Unggah Dokumen',      desc: 'Unggah file PDF atau PPT skripsi ke sistem' },
+    { icon: '🤖', num: '02', title: 'AI Membaca Dokumen',  desc: 'AI menganalisis seluruh isi dokumen secara mendalam' },
+    { icon: '💬', num: '03', title: 'Sesi Dimulai',        desc: 'AI mengajukan pertanyaan layaknya dosen penguji' },
+    { icon: '🔁', num: '04', title: 'Pendalaman Jawaban',  desc: 'Jawaban yang kurang kuat akan digali lebih jauh' },
   ],
   analisa: [
-    { icon: '📤', num: '01', title: 'Upload Dokumen',   desc: 'Upload skripsimu dalam format PDF atau PPT' },
-    { icon: '🔬', num: '02', title: 'AI Menganalisis',  desc: 'AI menilai setiap aspek penulisan skripsi' },
-    { icon: '📊', num: '03', title: 'Skor per Aspek',   desc: 'Nilai 0–100 untuk setiap aspek penilaian' },
-    { icon: '💡', num: '04', title: 'Saran Perbaikan',  desc: 'Rekomendasi spesifik yang langsung bisa ditindaklanjuti' },
+    { icon: '📤', num: '01', title: 'Unggah Dokumen',    desc: 'Unggah skripsi dalam format PDF atau PPT' },
+    { icon: '🔬', num: '02', title: 'AI Menganalisis',   desc: 'AI menilai setiap aspek penulisan skripsi secara objektif' },
+    { icon: '📊', num: '03', title: 'Skor per Aspek',    desc: 'Nilai 0–100 untuk setiap aspek penilaian' },
+    { icon: '💡', num: '04', title: 'Rekomendasi Aksi',  desc: 'Saran perbaikan spesifik yang dapat langsung ditindaklanjuti' },
   ],
   plagiasi: [
-    { icon: '📤', num: '01', title: 'Upload Dokumen',   desc: 'Upload skripsimu dalam format PDF atau PPT' },
-    { icon: '🔍', num: '02', title: 'Cek Kemiripan',    desc: 'Sistem menganalisis kemiripan teks secara vektor' },
-    { icon: '🤖', num: '03', title: 'Deteksi Teks AI',  desc: 'Estimasi persentase teks yang terindikasi AI' },
-    { icon: '📋', num: '04', title: 'Laporan Per Bab',  desc: 'Hasil ditampilkan per bab dengan visualisasi lengkap' },
+    { icon: '📤', num: '01', title: 'Unggah Dokumen',    desc: 'Unggah skripsi dalam format PDF atau PPT' },
+    { icon: '🔍', num: '02', title: 'Analisis Kemiripan', desc: 'Sistem mengukur kemiripan teks menggunakan pemrosesan vektor' },
+    { icon: '🤖', num: '03', title: 'Deteksi Teks AI',  desc: 'Estimasi persentase teks yang terindikasi dihasilkan AI' },
+    { icon: '📋', num: '04', title: 'Laporan per Bab',  desc: 'Hasil ditampilkan per bab lengkap dengan visualisasi' },
   ],
 }
 
@@ -178,7 +178,7 @@ export default function Home() {
           </div>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-gray-500 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-            Platform AI untuk persiapan sidang skripsi mahasiswa Indonesia. Latihan tanya-jawab, analisa mendalam, dan uji kesamaan teks — semua dalam satu tempat.
+            Platform berbasis AI untuk persiapan sidang skripsi mahasiswa Indonesia. Latihan tanya-jawab, penilaian mendalam, dan uji kesamaan teks — semua tersedia dalam satu tempat.
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -191,7 +191,7 @@ export default function Home() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="flex items-center gap-5 mt-8 justify-center">
-            {['✓ Hasil instan', '✓ Laporan detail', '✓ Akses 24/7'].map((t, i) => (
+            {['✓ Hasil instan', '✓ Laporan lengkap', '✓ Akses 24 jam'].map((t, i) => (
               <span key={i} className="text-xs text-gray-400 font-medium">{t}</span>
             ))}
           </motion.div>
@@ -203,7 +203,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">3 Fitur Utama</h2>
-            <p className="text-gray-500 max-w-sm mx-auto">Semua yang kamu butuhkan untuk persiapan sidang yang maksimal.</p>
+            <p className="text-gray-500 max-w-sm mx-auto">Semua yang dibutuhkan untuk persiapan sidang skripsi yang menyeluruh — dalam satu platform.</p>
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {FEATURES.map((f, i) => (
@@ -215,7 +215,6 @@ export default function Home() {
                   </div>
                   <h3 className="text-base font-bold text-gray-900 mb-2">{f.title}</h3>
                   <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
-                  <p className="mt-5 text-indigo-600 text-xs font-semibold group-hover:underline">Pelajari lebih lanjut →</p>
                 </Link>
               </motion.div>
             ))}
@@ -228,7 +227,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Cara Kerja</h2>
-            <p className="text-gray-500">Pilih fitur untuk lihat alurnya</p>
+            <p className="text-gray-500">Pilih fitur untuk melihat alurnya</p>
           </motion.div>
 
           {/* Tab switcher */}
@@ -265,9 +264,9 @@ export default function Home() {
               <div className="text-center mt-10">
                 <Link
                   href={`/${activeTab}`}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 underline underline-offset-2"
+                  className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-all hover:scale-105 shadow-sm shadow-indigo-200"
                 >
-                  Lihat detail lengkap fitur ini →
+                  Lihat Detail Fitur Ini →
                 </Link>
               </div>
             </motion.div>
@@ -281,20 +280,19 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
               <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full">
-                AI Dosen Penguji
+                Simulasi Sidang
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-5 mb-4 leading-tight">
-                Kritis. Mendalam.<br />Seperti Aslinya.
+                Kritis. Mendalam.<br />Seperti Sidang Asli.
               </h2>
               <p className="text-gray-500 mb-8 leading-relaxed text-sm">
-                AI TemanSkripsi bukan asisten yang ramah — ia adalah dosen penguji yang sesungguhnya.
-                Setiap pertanyaan dirancang untuk menguji pemahaman, bukan sekadar mengonfirmasi.
+                AI TemanSkripsi tidak sekadar mengajukan pertanyaan umum — ia membaca seluruh isi skripsimu dan menyusun pertanyaan yang tajam, kontekstual, dan terstruktur layaknya dosen penguji di ruang sidang.
               </p>
               <div className="space-y-5">
                 {[
-                  { icon: '🎯', title: 'Pertanyaan Kontekstual', desc: 'Berdasarkan isi dokumen skripsimu, bukan template umum' },
-                  { icon: '🔁', title: 'Penggalian Mendalam', desc: 'Jawaban lemah? AI langsung gali lebih dalam' },
-                  { icon: '📋', title: 'Alur Terstruktur', desc: 'Latar belakang → rumusan masalah → metode → hasil' },
+                  { icon: '🎯', title: 'Pertanyaan Kontekstual', desc: 'Dibuat berdasarkan isi dokumen skripsimu, bukan template umum' },
+                  { icon: '🔁', title: 'Pendalaman Jawaban', desc: 'Jawaban yang kurang kuat akan ditindaklanjuti dengan pertanyaan lebih dalam' },
+                  { icon: '📋', title: 'Alur Terstruktur', desc: 'Dimulai dari latar belakang, rumusan masalah, metodologi, hingga hasil penelitian' },
                 ].map((item, i) => (
                   <motion.div key={i} initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="flex gap-4 items-start">
                     <div className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-lg flex-shrink-0 shadow-sm">{item.icon}</div>
@@ -306,8 +304,8 @@ export default function Home() {
                 ))}
               </div>
               <div className="mt-8">
-                <Link href="/simulasi" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 underline underline-offset-2">
-                  Pelajari lebih lanjut tentang Simulasi Sidang →
+                <Link href="/simulasi" className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-all hover:scale-105 shadow-sm shadow-indigo-200">
+                  Pelajari Simulasi Sidang →
                 </Link>
               </div>
             </motion.div>
@@ -409,13 +407,13 @@ export default function Home() {
                 Objektif. Menyeluruh.<br />Per Aspek.
               </h2>
               <p className="text-gray-500 mb-8 leading-relaxed text-sm">
-                AI menilai skripsimu dari 5 aspek utama — mulai dari latar belakang, metodologi, hingga kesimpulan. Skor dan saran langsung keluar setelah analisa selesai.
+                AI mengevaluasi skripsimu dari lima aspek utama — mulai dari latar belakang hingga kesimpulan. Skor dan rekomendasi perbaikan tersedia segera setelah analisis selesai.
               </p>
               <div className="space-y-5">
                 {[
-                  { icon: '📏', title: '5 Aspek Penilaian', desc: 'Latar belakang, metodologi, analisis, konsistensi, kesimpulan' },
-                  { icon: '🎯', title: 'Skor 0–100 per Aspek', desc: 'Nilai objektif berbasis isi dokumenmu, bukan template umum' },
-                  { icon: '📝', title: 'Saran Perbaikan Detail', desc: 'Tahu persis apa yang harus diperbaiki sebelum hari sidang' },
+                  { icon: '📏', title: '5 Aspek Penilaian', desc: 'Latar belakang, metodologi, analisis data, konsistensi argumen, dan kesimpulan' },
+                  { icon: '🎯', title: 'Skor 0–100 per Aspek', desc: 'Nilai objektif berbasis isi dokumenmu, bukan rubrik generik' },
+                  { icon: '📝', title: 'Rekomendasi Perbaikan', desc: 'Ketahui dengan tepat apa yang perlu diperbaiki sebelum hari sidang' },
                 ].map((item, i) => (
                   <motion.div key={i} initial={{ opacity: 0, x: 12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="flex gap-4 items-start">
                     <div className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-lg flex-shrink-0 shadow-sm">{item.icon}</div>
@@ -427,8 +425,8 @@ export default function Home() {
                 ))}
               </div>
               <div className="mt-8">
-                <Link href="/analisa" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 underline underline-offset-2">
-                  Pelajari lebih lanjut tentang Analisa Skripsi →
+                <Link href="/analisa" className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-all hover:scale-105 shadow-sm shadow-emerald-200">
+                  Pelajari Analisa Skripsi →
                 </Link>
               </div>
             </motion.div>
@@ -442,19 +440,19 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
               <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1 rounded-full">
-                Cek Kesamaan & Teks AI
+                Uji Kesamaan & Teks AI
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-5 mb-4 leading-tight">
                 Transparan. Cepat.<br />Per Bab.
               </h2>
               <p className="text-gray-500 mb-8 leading-relaxed text-sm">
-                Estimasi kemiripan teks dan deteksi konten yang kemungkinan ditulis AI — ditampilkan per bab agar kamu tahu persis di mana yang perlu diperhatikan.
+                Periksa estimasi kemiripan teks dan indikasi konten berbantuan AI — ditampilkan per bab agar kamu tahu bagian mana yang perlu mendapat perhatian sebelum sidang.
               </p>
               <div className="space-y-5">
                 {[
-                  { icon: '📐', title: 'Estimasi Kemiripan Teks', desc: 'Persentase kemiripan antar dokumen, per bab' },
-                  { icon: '🤖', title: 'Deteksi Teks AI', desc: 'Estimasi seberapa banyak teks yang kemungkinan ditulis AI' },
-                  { icon: '⚠️', title: 'Laporan Transparan', desc: 'Estimasi untuk deteksi dini — bukan pengganti Turnitin' },
+                  { icon: '📐', title: 'Estimasi Kemiripan Teks', desc: 'Persentase kemiripan teks antardokumen, disajikan per bab' },
+                  { icon: '🤖', title: 'Indikasi Teks Berbantuan AI', desc: 'Estimasi proporsi teks yang terindikasi dihasilkan oleh AI' },
+                  { icon: '⚠️', title: 'Laporan Transparan', desc: 'Alat bantu deteksi dini — bukan pengganti Turnitin atau layanan profesional' },
                 ].map((item, i) => (
                   <motion.div key={i} initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="flex gap-4 items-start">
                     <div className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-lg flex-shrink-0 shadow-sm">{item.icon}</div>
@@ -466,8 +464,8 @@ export default function Home() {
                 ))}
               </div>
               <div className="mt-8">
-                <Link href="/plagiasi" className="inline-flex items-center gap-2 text-sm font-semibold text-amber-600 hover:text-amber-700 underline underline-offset-2">
-                  Pelajari lebih lanjut tentang Uji Kesamaan →
+                <Link href="/plagiasi" className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-all hover:scale-105 shadow-sm shadow-amber-200">
+                  Pelajari Uji Kesamaan →
                 </Link>
               </div>
             </motion.div>
@@ -523,13 +521,13 @@ export default function Home() {
       <section className="py-20 px-6 bg-white">
         <motion.div initial={{ opacity: 0, scale: 0.97 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="max-w-2xl mx-auto text-center bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-3xl p-12 shadow-xl shadow-indigo-200">
           <div className="text-5xl mb-4">🎓</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Jangan tunda persiapanmu</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">Persiapan Sidang Dimulai dari Sini</h2>
           <p className="text-indigo-100 mb-8 leading-relaxed">
-            Mulai latihan sidang sekarang dengan AI dosen penguji.<br />
-            Gratis, tanpa perlu daftar dulu.
+            Latihan dengan AI dosen penguji sekarang dan hadapi hari sidang dengan lebih percaya diri.<br />
+            Daftar gratis, tanpa perlu kartu kredit.
           </p>
-          <Link href="/sessions" className="inline-block bg-white hover:bg-gray-50 text-indigo-700 font-bold px-10 py-3.5 rounded-xl transition-all duration-200 hover:scale-105 shadow-md">
-            Mulai Sekarang →
+          <Link href="/auth/register" className="inline-block bg-white hover:bg-gray-50 text-indigo-700 font-bold px-10 py-3.5 rounded-xl transition-all duration-200 hover:scale-105 shadow-md">
+            Mulai Gratis Sekarang →
           </Link>
         </motion.div>
       </section>
@@ -537,7 +535,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-8 px-6 text-center border-t border-gray-100">
         <p className="text-xs text-gray-400">
-          © 2026 TemanSkripsi · Dibuat untuk membantu mahasiswa Indonesia lulus dengan percaya diri
+          © 2026 TemanSkripsi · Platform persiapan sidang skripsi berbasis AI untuk mahasiswa Indonesia
         </p>
       </footer>
     </div>
