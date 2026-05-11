@@ -104,6 +104,57 @@ const CHAT_DEMO = [
   { role: 'ai',   text: 'Mengapa akurasi BERT yang lebih tinggi tidak otomatis menjadikannya pilihan terbaik? Pertimbangkan aspek efisiensi komputasi dan kebutuhan deployment.' },
 ]
 
+const SUPPORTED_MAJORS = {
+  supported: [
+    {
+      category: 'Pendidikan', icon: '📚',
+      cardClass: 'border-sky-200 bg-sky-50', headerClass: 'text-sky-700', tagClass: 'bg-white border-sky-100 text-gray-700',
+      majors: ['PGSD', 'Pend. Matematika', 'Pend. Bahasa Indonesia', 'Pend. Bahasa Inggris', 'Pend. Bahasa Arab', 'Pend. IPA', 'Pend. IPS', 'Pend. Guru PAUD', 'Penjas & Olahraga', 'Pend. Luar Biasa', 'Pend. Agama Islam', 'Bimbingan & Konseling', 'Manajemen Pendidikan'],
+    },
+    {
+      category: 'Agama & Studi Islam', icon: '📖',
+      cardClass: 'border-teal-200 bg-teal-50', headerClass: 'text-teal-700', tagClass: 'bg-white border-teal-100 text-gray-700',
+      majors: ["Hukum Keluarga Islam", 'Hukum Ekonomi Syariah', "Ilmu Al-Qur'an & Tafsir", 'Ilmu Hadis', 'Akidah & Filsafat Islam', 'Sejarah Peradaban Islam', 'Komunikasi & Penyiaran Islam'],
+    },
+    {
+      category: 'Bisnis & Ekonomi', icon: '💼',
+      cardClass: 'border-indigo-200 bg-indigo-50', headerClass: 'text-indigo-700', tagClass: 'bg-white border-indigo-100 text-gray-700',
+      majors: ['Manajemen', 'Akuntansi', 'Ekonomi Pembangunan', 'Ekonomi Syariah', 'Keuangan & Perbankan', 'Perbankan Syariah', 'Administrasi Bisnis'],
+    },
+    {
+      category: 'Hukum & Ilmu Sosial', icon: '⚖️',
+      cardClass: 'border-purple-200 bg-purple-50', headerClass: 'text-purple-700', tagClass: 'bg-white border-purple-100 text-gray-700',
+      majors: ['Ilmu Hukum', 'Sosiologi', 'Ilmu Komunikasi', 'Jurnalistik', 'Ilmu Pemerintahan', 'Administrasi Publik', 'Hubungan Internasional', 'Ilmu Politik'],
+    },
+    {
+      category: 'Bahasa & Sastra', icon: '✍️',
+      cardClass: 'border-rose-200 bg-rose-50', headerClass: 'text-rose-700', tagClass: 'bg-white border-rose-100 text-gray-700',
+      majors: ['Sastra Indonesia', 'Sastra Inggris', 'Sastra Arab', 'Sejarah', 'Filsafat', 'Linguistik', 'Perpustakaan & Ilmu Informasi'],
+    },
+    {
+      category: 'Kesehatan', icon: '🏥',
+      cardClass: 'border-emerald-200 bg-emerald-50', headerClass: 'text-emerald-700', tagClass: 'bg-white border-emerald-100 text-gray-700',
+      majors: ['Keperawatan', 'Kebidanan', 'Gizi', 'Kesehatan Masyarakat', 'Farmasi'],
+    },
+    {
+      category: 'Pertanian & Lingkungan', icon: '🌾',
+      cardClass: 'border-lime-200 bg-lime-50', headerClass: 'text-lime-700', tagClass: 'bg-white border-lime-100 text-gray-700',
+      majors: ['Agribisnis', 'Penyuluhan Pertanian', 'Kehutanan', 'Agroekologi'],
+    },
+    {
+      category: 'Psikologi', icon: '🧠',
+      cardClass: 'border-violet-200 bg-violet-50', headerClass: 'text-violet-700', tagClass: 'bg-white border-violet-100 text-gray-700',
+      majors: ['Psikologi', 'Psikologi Pendidikan', 'Psikologi Industri & Organisasi'],
+    },
+    {
+      category: 'Teknologi Informasi', icon: '💻',
+      cardClass: 'border-amber-200 bg-amber-50', headerClass: 'text-amber-700', tagClass: 'bg-white border-amber-100 text-gray-700',
+      majors: ['Sistem Informasi', 'Teknik Informatika'],
+    },
+  ],
+  comingSoon: ['Arsitektur', 'Teknik Sipil', 'Teknik Mesin', 'Teknik Elektro', 'Kedokteran', 'Kedokteran Gigi', 'Biologi', 'Kimia', 'Fisika', 'Matematika', 'Seni Rupa', 'Desain Komunikasi Visual'],
+}
+
 /* ─── PAGE ──────────────────────────────────────────────── */
 export default function Home() {
   const [textIndex, setTextIndex] = useState(0)
@@ -514,6 +565,79 @@ export default function Home() {
               </div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* ── SUPPORTED MAJORS ──────────────────────────────── */}
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
+            <span className="inline-block bg-emerald-100 border border-emerald-300 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-lg mb-4">✅ Tersedia Sekarang</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Untuk Jurusan Apa Saja?</h2>
+            <p className="text-gray-500 max-w-xl mx-auto mb-8">TemanSkripsi hadir untuk skripsi berbasis teks dan penulisan ilmiah — mencakup lebih dari 50 program studi di seluruh Indonesia.</p>
+            <div className="flex items-center justify-center gap-6 flex-wrap">
+              <div className="text-center">
+                <p className="text-3xl font-extrabold text-indigo-600">50+</p>
+                <p className="text-xs text-gray-400 mt-0.5">Program Studi</p>
+              </div>
+              <div className="w-px h-8 bg-gray-200 hidden sm:block" />
+              <div className="text-center">
+                <p className="text-3xl font-extrabold text-indigo-600">9</p>
+                <p className="text-xs text-gray-400 mt-0.5">Rumpun Ilmu</p>
+              </div>
+              <div className="w-px h-8 bg-gray-200 hidden sm:block" />
+              <div className="text-center">
+                <p className="text-3xl font-extrabold text-indigo-600">S1 & S2</p>
+                <p className="text-xs text-gray-400 mt-0.5">Semua Jenjang</p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Supported grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+            {SUPPORTED_MAJORS.supported.map((group, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.04 }}
+                className={`border rounded-2xl p-5 hover:shadow-md transition-all duration-300 ${group.cardClass}`}
+              >
+                <div className="flex items-center gap-2.5 mb-3.5">
+                  <span className="text-2xl">{group.icon}</span>
+                  <h3 className={`font-bold text-sm ${group.headerClass}`}>{group.category}</h3>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.majors.map((major, j) => (
+                    <span key={j} className={`text-[11px] px-2.5 py-1 rounded-full border ${group.tagClass}`}>
+                      {major}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Coming soon */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="border border-gray-200 rounded-2xl p-6 bg-white"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+              <span className="inline-block bg-gray-100 border border-gray-200 text-gray-500 text-xs font-bold px-3 py-1 rounded-lg self-start sm:self-auto">🔜 Sedang Dikembangkan</span>
+              <p className="text-sm text-gray-400">Dukungan penuh untuk jurusan-jurusan berikut akan segera tersedia</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {SUPPORTED_MAJORS.comingSoon.map((major, i) => (
+                <span key={i} className="text-[11px] bg-gray-50 border border-gray-200 text-gray-400 px-2.5 py-1 rounded-full">
+                  {major}
+                </span>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
 

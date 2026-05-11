@@ -43,7 +43,7 @@ const FLOW_STEPS = [
   { icon: '📤', num: '01', title: 'Upload Dokumen Skripsi', desc: 'Upload file PDF atau PPT skripsimu. AI akan membaca dan memahami seluruh isi dokumen — mulai dari BAB I hingga daftar pustaka.' },
   { icon: '🧠', num: '02', title: 'AI Memahami Konteks', desc: 'AI mengekstrak topik utama, metodologi, argumen, dan temuan penelitianmu. Proses ini memastikan pertanyaan yang dihasilkan benar-benar relevan.' },
   { icon: '🎙️', num: '03', title: 'Sesi Simulasi Dimulai', desc: 'AI membuka sesi dengan pertanyaan pembuka, lalu mengikuti alur sidang nyata: latar belakang → metodologi → hasil → kesimpulan.' },
-  { icon: '🔁', num: '04', title: 'Penggalian Mendalam', desc: 'Jawaban yang lemah atau tidak konsisten langsung digali lebih dalam. AI tidak akan pindah topik sebelum jawabanmu memuaskan.' },
+  { icon: '🔁', num: '04', title: 'Penggalian Bertahap', desc: 'Jawaban yang kurang mendalam langsung digali lebih jauh. AI memastikan setiap topik terjawab tuntas sebelum berlanjut ke pertanyaan berikutnya.' },
   { icon: '📋', num: '05', title: 'Feedback & Ringkasan', desc: 'Di akhir sesi, AI memberikan ringkasan performa: topik mana yang sudah kuat dan mana yang masih perlu diperdalam sebelum sidang.' },
 ]
 
@@ -163,8 +163,8 @@ export default function SimulasiPage() {
           </motion.h1>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.18 }} className="text-gray-500 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-            AI TemanSkripsi berperan sebagai dosen penguji yang sesungguhnya. Bukan asisten yang membantu — 
-            ia bertanya kritis, menggali jawaban lemah, dan tidak berhenti sampai kamu benar-benar paham skripsimu sendiri.
+            AI TemanSkripsi berperan sebagai dosen penguji yang sesungguhnya. Bukan asisten yang membantu —
+            AI bertanya kritis, menggali setiap jawaban secara mendalam, dan memastikan kamu benar-benar memahami skripsimu sendiri.
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -257,7 +257,7 @@ export default function SimulasiPage() {
                   {
                     icon: '🔁',
                     title: 'Follow-up Adaptif',
-                    desc: 'Jawaban yang tidak lengkap atau ambigu memicu pertanyaan pendalaman. AI tidak akan pindah topik sebelum mendapat jawaban yang memuaskan.',
+                    desc: 'Jawaban yang kurang lengkap atau ambigu memicu pertanyaan pendalaman. AI memastikan setiap topik terjawab dengan tuntas sebelum melanjutkan.',
                   },
                   {
                     icon: '🧠',

@@ -17,7 +17,7 @@ const ANALYSIS_SCORES = [
 const FLOW_STEPS = [
   { icon: '📤', num: '01', title: 'Upload Dokumen Skripsi', desc: 'Upload file PDF atau PPT skripsimu. Sistem mendukung dokumen hingga 50 halaman dengan ekstraksi teks otomatis dari semua bab.' },
   { icon: '🔬', num: '02', title: 'AI Mengekstrak & Membaca', desc: 'AI membaca seluruh isi dokumen per bab. Setiap paragraf, argumen, data, dan kesimpulan diproses untuk pemahaman menyeluruh.' },
-  { icon: '⚖️', num: '03', title: 'Penilaian per Aspek', desc: 'Setiap dari 5 aspek dinilai secara independen dengan rubrik yang mirip dengan kriteria penilaian dosen penguji sesungguhnya.' },
+  { icon: '⚖️', num: '03', title: 'Penilaian per Aspek', desc: 'Setiap dari 5 aspek dinilai secara independen berdasarkan standar yang mencerminkan ekspektasi dosen penguji sesungguhnya.' },
   { icon: '📊', num: '04', title: 'Skor 0–100 Ditampilkan', desc: 'Setiap aspek mendapat skor numerik 0–100 dengan visualisasi warna — hijau (kuat), kuning (perlu perhatian), merah (lemah).' },
   { icon: '💡', num: '05', title: 'Feedback & Rekomendasi', desc: 'Setiap skor disertai penjelasan spesifik mengapa nilai itu diberikan dan langkah konkret yang bisa kamu ambil untuk memperbaikinya.' },
 ]
@@ -132,8 +132,8 @@ export default function AnalisaPage() {
           </motion.div>
 
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-5 leading-tight">
-            Tahu Nilai Skripsimu<br />
-            <span className="text-emerald-600">Sebelum Sidang Berlangsung</span>
+            Ketahui Kekuatan & Kelemahan<br />
+            <span className="text-emerald-600">Skripsimu Sebelum Hari Sidang</span>
           </motion.h1>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.18 }} className="text-gray-500 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">

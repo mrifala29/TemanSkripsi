@@ -72,13 +72,13 @@ export default function PlagiasiPage() {
           </motion.div>
 
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-5 leading-tight">
-            Deteksi Dini Sebelum<br />
-            <span className="text-amber-500">Dosen Penguji Menemukannya</span>
+            Pastikan Keaslian<br />
+            <span className="text-amber-500">Skripsimu Sebelum Hari Sidang</span>
           </motion.h1>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.18 }} className="text-gray-500 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-            Estimasi kemiripan teks dan deteksi konten AI ditampilkan per bab, sehingga kamu tahu persis 
-            bagian mana yang paling berisiko sebelum skripsi diperiksa secara resmi.
+            Estimasi kemiripan teks dan deteksi konten AI ditampilkan per bab, sehingga kamu dapat mengetahui
+            bagian yang perlu mendapat perhatian lebih sebelum memasuki ruang sidang.
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -334,10 +334,10 @@ export default function PlagiasiPage() {
           className="max-w-2xl mx-auto text-center bg-gradient-to-br from-amber-500 to-amber-600 rounded-3xl p-12 shadow-xl shadow-amber-200"
         >
           <div className="text-5xl mb-4">🔍</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Cek skripsimu sekarang</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">Periksa Keaslian Skripsimu Sekarang</h2>
           <p className="text-amber-100 mb-8 leading-relaxed">
-            Tahu kondisi kemiripan dan konten AI skripsimu<br />
-            sebelum dosen penguji yang menemukannya.
+            Dapatkan gambaran menyeluruh tentang originalitas skripsimu<br />
+            sebelum memasuki ruang sidang.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/similarity" className="inline-block bg-white hover:bg-gray-50 text-amber-700 font-bold px-8 py-3.5 rounded-xl transition-all hover:scale-105 shadow-md">

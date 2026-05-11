@@ -141,7 +141,7 @@ const BUNDLES: Bundle[] = [
     icon: '🎯',
     name: 'Sidang + Analisa',
     desc: 'Latihan sidang & temukan kelemahan skripsi',
-    badge: 'REKOMENDASI',
+    badge: 'TERPOPULER',
     ppt: {
       priceLabel: 'IDR 20.000',
       normalLabel: 'IDR 25.000',
@@ -176,8 +176,8 @@ const BUNDLES: Bundle[] = [
 
 const FAQ = [
   {
-    q: 'Apa itu "putaran tanya-jawab" di simulasi?',
-    a: 'Satu putaran = AI mengajukan pertanyaan → kamu menjawab → AI mengevaluasi jawabanmu sekaligus mengajukan pertanyaan lanjutan. Siklus ini berulang hingga kamu mengakhiri sesi. Jadi di setiap giliran, kamu mendapat evaluasi DAN pertanyaan baru.',
+    q: 'Bagaimana cara kerja sesi simulasi sidang?',
+    a: 'Setiap giliran berjalan seperti ini: AI mengajukan pertanyaan → kamu menjawab → AI mengevaluasi jawabanmu dan langsung mengajukan pertanyaan lanjutan. Proses ini berulang hingga kamu mengakhiri sesi. Di setiap giliran, kamu mendapat evaluasi sekaligus pertanyaan baru.',
   },
   {
     q: 'Apa bedanya PPT dan Fulltext?',
@@ -192,7 +192,7 @@ const FAQ = [
     a: 'Kredit disimpan per fitur di akunmu — tidak ada masa kedaluwarsa. Beli sesuai kebutuhan, gunakan kapan saja. Kredit Simulasi tidak bisa dipakai untuk Analisa, dan sebaliknya.',
   },
   {
-    q: 'Apa yang dijamin di "min. N putaran"?',
+    q: 'Apa yang dijamin di "min. N giliran"?',
     a: 'Jika sesi terputus karena error dari sistem kami sebelum mencapai minimum, kredit akan dikembalikan penuh ke akunmu.',
   },
   {
