@@ -1,418 +1,220 @@
 """
-TemanSkripsi AI Service
-FastAPI service for document parsing, embedding, simulation, analysis and similarity.
-"""
+TemanSkripsi AI Service — application entry point.
 
-import io
-import os
-import textwrap
+This file contains ONLY:
+  - FastAPI app bootstrap & middleware
+  - Route definitions (thin — delegate all logic to agents/)
+  - Background task registration for document parsing
+
+Business logic lives in:
+  agents/      — LangChain-powered AI agents (analisis, simulasi, kesamaan)
+  parsers/     — document text extraction (extractor) and embedding (embedder)
+  rag/         — pgvector retrieval utilities
+  prompts/     — 3-layer prompt loader and .md template files
+  schemas/     — Pydantic request/response models
+  core/        — config, dependency injection, memory utilities
+"""
 import logging
 from contextlib import asynccontextmanager
-from typing import Any
 
-import fitz  # PyMuPDF
-import google.generativeai as genai
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pptx import Presentation
-from pydantic import BaseModel
-from supabase import Client, create_client
+
+from agents.analisis_agent import AnalisisAgent
+from agents.kesamaan_agent import KesamaanAgent
+from agents.simulasi_agent import SimulasiAgent
+from core.dependencies import get_embeddings, get_llm, get_supabase
+from parsers.embedder import chunk_text, embed_and_store
+from parsers.extractor import extract_text
+from schemas import (
+    AnalysisRequest,
+    AnalysisResponse,
+    ParseRequest,
+    SimilarityRequest,
+    SimilarityResponse,
+    SimulationMessageRequest,
+    SimulationMessageResponse,
+    SimulationStartRequest,
+    SimulationStartResponse,
+)
 
 load_dotenv()
 
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-
-# ---------------------------------------------------------------------------
-# Config
-# ---------------------------------------------------------------------------
-SUPABASE_URL: str = os.environ["SUPABASE_URL"]
-SUPABASE_KEY: str = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-GEMINI_API_KEY: str = os.environ["GEMINI_API_KEY"]
-
-CHUNK_SIZE = 800       # characters per chunk
-CHUNK_OVERLAP = 100    # characters of overlap between chunks
-EMBEDDING_MODEL = "models/text-embedding-004"
-CHAT_MODEL = "gemini-1.5-flash"
-
-# Schema-mapped aspect codes
-ASPECT_CODE_MAP = {
-    "Kejelasan Latar Belakang":         "latar_belakang",
-    "Rumusan Masalah & Tujuan":         "rumusan_masalah",
-    "Kekuatan Metodologi":              "metodologi",
-    "Kualitas Analisis & Pembahasan":   "analisis_pembahasan",
-    "Konsistensi Pembahasan":           "konsistensi",
-    "Kualitas Kesimpulan":              "kesimpulan",
-}
-
-# Evaluation aspects (must match docs/evaluation-criteria.md)
-EVAL_ASPECTS = [
-    "Kejelasan Latar Belakang",
-    "Rumusan Masalah & Tujuan",
-    "Kekuatan Metodologi",
-    "Kualitas Analisis & Pembahasan",
-    "Konsistensi Pembahasan",
-    "Kualitas Kesimpulan",
-]
-
-
-# ---------------------------------------------------------------------------
-# Supabase + Gemini clients (initialised at startup)
-# ---------------------------------------------------------------------------
-supabase: Client
-embed_model: Any
+# ──────────────────────────────────────────────────────────────────────────
+# App
+# ──────────────────────────────────────────────────────────────────────────
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global supabase, embed_model
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    genai.configure(api_key=GEMINI_API_KEY)
-    log.info("AI service ready — Supabase + Gemini configured")
+    log.info("TemanSkripsi AI Service v2 started")
     yield
+    log.info("TemanSkripsi AI Service shutting down")
 
 
-app = FastAPI(title="TemanSkripsi AI Service", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="TemanSkripsi AI Service",
+    description=(
+        "AI endpoints untuk analisis skripsi, simulasi sidang, dan cek kesamaan. "
+        "Semua fitur AI berbasis RAG (Retrieval-Augmented Generation) menggunakan LangChain + Gemini."
+    ),
+    version="2.0.0",
+    lifespan=lifespan,
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000", "http://backend:8000"],
+    allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _chunk_text(text: str) -> list[str]:
-    """Split text into overlapping chunks."""
-    chunks: list[str] = []
-    start = 0
-    while start < len(text):
-        end = start + CHUNK_SIZE
-        chunks.append(text[start:end])
-        start += CHUNK_SIZE - CHUNK_OVERLAP
-    return [c.strip() for c in chunks if c.strip()]
+# ──────────────────────────────────────────────────────────────────────────
+# Background task: document parsing
+# ──────────────────────────────────────────────────────────────────────────
 
 
-def _extract_text_from_pdf(data: bytes) -> str:
-    doc = fitz.open(stream=data, filetype="pdf")
-    return "\n\n".join(page.get_text() for page in doc)
-
-
-def _extract_text_from_pptx(data: bytes) -> str:
-    prs = Presentation(io.BytesIO(data))
-    slides: list[str] = []
-    for i, slide in enumerate(prs.slides, 1):
-        texts = [shape.text_frame.text for shape in slide.shapes if shape.has_text_frame]
-        slide_text = "\n".join(t for t in texts if t.strip())
-        if slide_text:
-            slides.append(f"[Slide {i}]\n{slide_text}")
-    return "\n\n".join(slides)
-
-
-def _get_embedding(text: str) -> list[float]:
-    result = genai.embed_content(model=EMBEDDING_MODEL, content=text)
-    return result["embedding"]
-
-
-def _parse_and_embed_document(document_id: str, file_path: str, file_type: str):
-    """Background task: download → parse → chunk → embed → store."""
-    log.info(f"[parse] Starting: {document_id} ({file_path})")
+def _parse_and_embed(document_id: str, file_path: str, file_type: str) -> None:
+    """Download → extract text → chunk → embed → store in document_chunks."""
+    supabase   = get_supabase()
+    embeddings = get_embeddings()
     try:
-        # 1. Download file from Supabase Storage
-        data: bytes = supabase.storage.from_("documents").download(file_path)
-
-        # 2. Extract text
-        ext = file_type.lower().lstrip(".")
-        if ext == "pdf":
-            text = _extract_text_from_pdf(data)
-        elif ext in ("ppt", "pptx"):
-            text = _extract_text_from_pptx(data)
-        else:
-            raise ValueError(f"Unsupported file type: {file_type}")
-
-        if not text.strip():
-            raise ValueError("No text extracted from document")
-
-        log.info(f"[parse] Extracted {len(text)} chars from {document_id}")
-
-        # 3. Chunk
-        chunks = _chunk_text(text)
-        log.info(f"[parse] {len(chunks)} chunks created")
-
-        # 4. Embed + store chunks (batch to avoid rate limits)
-        rows = []
-        for i, chunk in enumerate(chunks):
-            embedding = _get_embedding(chunk)
-            rows.append({
-                "document_id":  document_id,
-                "chunk_index":  i,
-                "content":      chunk,
-                "embedding":    embedding,
-                "metadata":     {"char_count": len(chunk)},
-            })
-
-        # Insert in batches of 20
-        batch_size = 20
-        for start in range(0, len(rows), batch_size):
-            batch = rows[start:start + batch_size]
-            supabase.table("document_chunks").insert(batch).execute()
-
-        # 5. Mark document as done
+        data   = supabase.storage.from_("documents").download(file_path)
+        text   = extract_text(data, file_type)
+        chunks = chunk_text(text)
+        embed_and_store(supabase, embeddings, document_id, chunks)
         supabase.table("documents").update({"parse_status": "done"}).eq("id", document_id).execute()
-        log.info(f"[parse] Done: {document_id}")
-
+        log.info("Document %s parsed (%d chunks)", document_id, len(chunks))
     except Exception as exc:
-        log.error(f"[parse] Failed {document_id}: {exc}", exc_info=True)
+        log.error("Parse failed for %s: %s", document_id, exc, exc_info=True)
         supabase.table("documents").update({"parse_status": "failed"}).eq("id", document_id).execute()
 
 
-def _retrieve_context(document_id: str, query: str, top_k: int = 5) -> str:
-    """RAG: embed query → find top-k similar chunks via pgvector RPC."""
-    query_embedding = _get_embedding(query)
-    result = supabase.rpc("match_document_chunks", {
-        "query_embedding": query_embedding,
-        "match_document_id": document_id,
-        "match_count": top_k,
-    }).execute()
-    chunks = result.data or []
-    return "\n\n---\n\n".join(c["content"] for c in chunks)
+# ──────────────────────────────────────────────────────────────────────────
+# Routes: Meta
+# ──────────────────────────────────────────────────────────────────────────
 
 
-# ---------------------------------------------------------------------------
-# Request / Response models
-# ---------------------------------------------------------------------------
-
-class ParseRequest(BaseModel):
-    document_id: str
-    file_path: str
-    file_type: str
-
-
-class SessionStartRequest(BaseModel):
-    session_id: str
-    document_id: str
-
-
-class SessionMessageRequest(BaseModel):
-    session_id: str
-    document_id: str
-    message: str
-    history: list[dict] = []
-
-
-class AnalyzeRequest(BaseModel):
-    document_id: str
-    analysis_id: str
-
-
-class SimilarityRequest(BaseModel):
-    document_id: str
-    similarity_id: str
-
-
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
-
-@app.get("/health")
+@app.get("/health", tags=["Meta"])
 def health():
-    return {"status": "ok", "service": "TemanSkripsi AI"}
+    """Health check."""
+    return {"status": "ok", "service": "temanskripsi-ai", "version": "2.0.0"}
 
 
-@app.post("/documents/parse", status_code=202)
+# ──────────────────────────────────────────────────────────────────────────
+# Routes: Documents
+# ──────────────────────────────────────────────────────────────────────────
+
+
+@app.post("/documents/parse", status_code=202, tags=["Documents"])
 def parse_document(req: ParseRequest, bg: BackgroundTasks):
-    """Trigger async document parsing + embedding."""
-    bg.add_task(_parse_and_embed_document, req.document_id, req.file_path, req.file_type)
+    """
+    Trigger async document parsing and embedding.
+
+    - **document_id**: UUID of the document record
+    - **file_path**: Path inside Supabase Storage `documents` bucket
+    - **file_type**: `"pdf"` or `"pptx"`
+    """
+    bg.add_task(_parse_and_embed, req.document_id, req.file_path, req.file_type)
     return {"message": "Parsing dimulai", "document_id": req.document_id}
 
 
-@app.post("/sessions/start")
-def session_start(req: SessionStartRequest):
-    """Generate the first question for a simulation session."""
-    context = _retrieve_context(req.document_id, "topik utama penelitian metodologi")
-
-    prompt = textwrap.dedent(f"""
-        Kamu adalah dosen penguji sidang skripsi yang tegas namun membangun.
-        Berdasarkan isi skripsi berikut, buat 1 pertanyaan pembuka sidang yang relevan.
-        Pertanyaan harus spesifik, tidak terlalu mudah, dan mendorong mahasiswa untuk menjelaskan pemikirannya.
-
-        Isi Skripsi:
-        {context}
-
-        Balas HANYA dengan pertanyaan (tanpa preambul, tanpa penomoran).
-    """).strip()
-
-    model = genai.GenerativeModel(CHAT_MODEL)
-    response = model.generate_content(prompt)
-    question = response.text.strip()
-
-    # Simpan pesan AI ke DB
-    supabase.table("messages").insert({
-        "session_id": req.session_id,
-        "role":       "ai",
-        "content":    question,
-        "turn_index": 0,
-        "is_followup": False,
-    }).execute()
-
-    return {"message": question, "role": "ai"}
+# ──────────────────────────────────────────────────────────────────────────
+# Routes: Analysis
+# ──────────────────────────────────────────────────────────────────────────
 
 
-@app.post("/sessions/message")
-def session_message(req: SessionMessageRequest):
-    """Process a user message and return the AI's next question/response."""
-    # RAG: retrieve relevant chunks based on user's answer
-    context = _retrieve_context(req.document_id, req.message, top_k=4)
+@app.post("/documents/analyze", response_model=AnalysisResponse, tags=["Analysis"])
+def analyze_document(req: AnalysisRequest):
+    """
+    Analyze and score a thesis across 6 academic aspects using RAG + LangChain.
 
-    # Build conversation history string
-    history_str = ""
-    for turn in req.history[-6:]:  # last 6 turns only
-        role = "Dosen" if turn.get("role") == "ai" else "Mahasiswa"
-        history_str += f"{role}: {turn.get('content', '')}\n"
+    - **context.document_id**: Thesis document UUID
+    - **context.major**: Faculty slug, e.g. `"pendidikan"`, `"hukum"`, `"bisnis"`
+    - **context.jurusan**: Program slug, e.g. `"pendidikan-matematika"`, `"hukum-pidana"`
+    - **context.judul_skripsi**: Full thesis title (used as RAG query)
+    - **analysis_id**: Pre-created `analyses` record UUID
 
-    prompt = textwrap.dedent(f"""
-        Kamu adalah dosen penguji sidang skripsi yang tegas namun membangun.
-
-        Percakapan sebelumnya:
-        {history_str}
-
-        Konteks dari skripsi yang relevan:
-        {context}
-
-        Jawaban terakhir mahasiswa: "{req.message}"
-
-        Berikan respons sebagai dosen penguji:
-        - Jika jawaban kurang tepat atau kurang lengkap, minta klarifikasi atau beri pertanyaan lanjutan.
-        - Jika jawaban baik, beri apresiasi singkat lalu ajukan pertanyaan baru yang lebih dalam.
-        - Tetap fokus pada isi skripsi.
-
-        Balas HANYA dengan respons dosen (tanpa preambul).
-    """).strip()
-
-    model = genai.GenerativeModel(CHAT_MODEL)
-    response = model.generate_content(prompt)
-    reply = response.text.strip()
-
-    return {"message": reply, "role": "ai"}
+    Returns structured scores (0–100) per aspect with feedback, weaknesses, suggestions,
+    and potential examiner questions.
+    """
+    try:
+        agent = AnalisisAgent(get_supabase(), get_llm(), get_embeddings())
+        return agent.run(req)
+    except Exception as exc:
+        log.error("Analysis failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
-@app.post("/documents/analyze")
-def analyze_document(req: AnalyzeRequest):
-    """Score document on 6 evaluation aspects."""
-    # Retrieve broad context for each aspect
-    all_text_chunks = supabase.table("document_chunks") \
-        .select("content") \
-        .eq("document_id", req.document_id) \
-        .limit(20) \
-        .execute()
-
-    context = "\n\n---\n\n".join(c["content"] for c in (all_text_chunks.data or []))
-
-    prompt = textwrap.dedent(f"""
-        Kamu adalah dosen penguji yang mengevaluasi skripsi.
-        Berikan skor 0–100 dan umpan balik singkat untuk setiap aspek berikut berdasarkan isi skripsi.
-
-        Aspek yang dinilai:
-        1. Kejelasan Latar Belakang
-        2. Rumusan Masalah & Tujuan
-        3. Kekuatan Metodologi
-        4. Kualitas Analisis & Pembahasan
-        5. Konsistensi Pembahasan
-        6. Kualitas Kesimpulan
-
-        Isi Skripsi (sampel):
-        {context[:4000]}
-
-        Balas dalam format JSON:
-        {{
-          "overall": <rata-rata skor>,
-          "summary": "<ringkasan 1-2 kalimat>",
-          "scores": [
-            {{"aspect": "Kejelasan Latar Belakang", "score": <0-100>, "feedback": "<umpan balik>"}},
-            ...
-          ]
-        }}
-    """).strip()
-
-    model = genai.GenerativeModel(CHAT_MODEL)
-    response = model.generate_content(prompt)
-
-    # Extract JSON from response
-    import json, re
-    text = response.text.strip()
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
-        raise HTTPException(500, "Gagal mem-parse respons analisa dari AI")
-
-    result = json.loads(match.group())
-
-    # Store scores in DB
-    scores_rows = []
-    for s in result.get("scores", []):
-        aspect_display = s["aspect"]
-        aspect_code = ASPECT_CODE_MAP.get(aspect_display, "latar_belakang")
-        scores_rows.append({
-            "analysis_id": req.analysis_id,
-            "aspect":      aspect_code,
-            "score":       s["score"],
-            "notes":       s.get("feedback", ""),
-        })
-    if scores_rows:
-        supabase.table("analysis_scores").insert(scores_rows).execute()
-
-    # Update analysis record
-    supabase.table("analyses").update({
-        "overall_score": result.get("overall", 0),
-        "summary":       result.get("summary", ""),
-        "status":        "done",
-    }).eq("id", req.analysis_id).execute()
-
-    return result
+# ──────────────────────────────────────────────────────────────────────────
+# Routes: Simulation
+# ──────────────────────────────────────────────────────────────────────────
 
 
-@app.post("/documents/similarity")
+@app.post("/sessions/start", response_model=SimulationStartResponse, tags=["Simulation"])
+def session_start(req: SimulationStartRequest):
+    """
+    Start a thesis defence simulation — returns the first examiner question.
+
+    - **context.document_id**: Thesis document UUID
+    - **context.major / context.jurusan**: Used to load the per-jurusan prompt
+    - **context.judul_skripsi**: Thesis title (used as RAG query)
+    - **session_id**: Pre-created `simulation_sessions` record UUID
+    """
+    try:
+        agent = SimulasiAgent(get_supabase(), get_llm(), get_embeddings())
+        return agent.start(req)
+    except Exception as exc:
+        log.error("Session start failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/sessions/message", response_model=SimulationMessageResponse, tags=["Simulation"])
+def session_message(req: SimulationMessageRequest):
+    """
+    Send a student answer and receive the next examiner question or follow-up.
+
+    - **user_message**: The student's latest answer
+    - **chat_history**: Full conversation — `[{"role": "assistant"|"user", "content": "..."}]`
+    - **session_id**: Active session UUID
+    """
+    try:
+        agent = SimulasiAgent(get_supabase(), get_llm(), get_embeddings())
+        return agent.message(req)
+    except Exception as exc:
+        log.error("Session message failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Routes: Similarity
+# ──────────────────────────────────────────────────────────────────────────
+
+
+@app.post("/documents/similarity", response_model=SimilarityResponse, tags=["Similarity"])
 def check_similarity(req: SimilarityRequest):
-    """Check document similarity against corpus using pgvector."""
-    # Get all chunks for the document
-    chunks_result = supabase.table("document_chunks") \
-        .select("content,embedding") \
-        .eq("document_id", req.document_id) \
-        .limit(10) \
-        .execute()
+    """
+    Check internal document similarity via pgvector cosine similarity.
 
-    chunks = chunks_result.data or []
-    if not chunks:
-        raise HTTPException(404, "Dokumen belum diproses")
+    **Internal check only** — not a replacement for Turnitin.
 
-    # For each chunk, find similar chunks from OTHER documents
-    similarity_scores: list[float] = []
-    for chunk in chunks:
-        result = supabase.rpc("match_other_document_chunks", {
-            "query_embedding":    chunk["embedding"],
-            "exclude_document_id": req.document_id,
-            "match_count":        3,
-        }).execute()
-        matches = result.data or []
-        if matches:
-            # similarity = 1 - cosine_distance (Supabase returns distance, not similarity)
-            similarity_scores.extend([1 - m.get("distance", 1) for m in matches])
+    - **context.document_id**: Target document UUID
+    - **similarity_check_id**: Pre-created `similarity_checks` record UUID
 
-    overall_pct = round((sum(similarity_scores) / len(similarity_scores)) * 100, 1) if similarity_scores else 0.0
+    Returns overall similarity percentage and top matching chunks.
+    """
+    try:
+        agent = KesamaanAgent(get_supabase(), get_embeddings())
+        return agent.run(req)
+    except Exception as exc:
+        log.error("Similarity check failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(exc))
 
-    # Update similarity record (use ai_text_percent as overall proxy)
-    supabase.table("similarity_checks").update({
-        "ai_text_percent": overall_pct,
-        "similarity_note": f"Similarity rata-rata dari {len(chunks)} chunk: {overall_pct}%",
-        "status":          "done",
-    }).eq("id", req.similarity_id).execute()
 
-    return {"similarity_percentage": overall_pct, "chunks_checked": len(chunks)}
+
+
