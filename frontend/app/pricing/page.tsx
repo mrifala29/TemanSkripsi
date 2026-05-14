@@ -228,7 +228,7 @@ function Toggle({
             : 'text-gray-500 hover:text-gray-700'
         }`}
       >
-        📄 Fulltext
+         Fulltext
       </button>
     </div>
   )
@@ -387,7 +387,7 @@ export default function PricingPage() {
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                📄 Fulltext Skripsi
+                 Fulltext Skripsi
               </button>
             </div>
           </div>
