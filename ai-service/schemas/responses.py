@@ -10,19 +10,17 @@ from pydantic import BaseModel
 # Analysis
 # ─────────────────────────────────────────────
 
-class AnalysisScoreItem(BaseModel):
-    aspect: str          # DB key, e.g. "latar_belakang"
-    aspect_display: str  # human-readable, e.g. "Kejelasan Latar Belakang"
-    score: float         # 0–100
-    feedback: str
+class BabAnalysis(BaseModel):
+    bab: str      # e.g. "BAB I – Pendahuluan"
+    skor: float   # 0–100
+    analisa: str  # detailed analysis of the chapter
+    saran: str    # specific improvement suggestions for the chapter
 
 
 class AnalysisResponse(BaseModel):
     overall_score: float
     summary: str
-    scores: list[AnalysisScoreItem]
-    weaknesses: list[str]
-    suggestions: list[str]
+    babs: list[BabAnalysis]
     potential_questions: list[str]
 
 

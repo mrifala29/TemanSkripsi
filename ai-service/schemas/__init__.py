@@ -11,7 +11,7 @@ from schemas.requests import (
 )
 from schemas.responses import (
     AnalysisResponse,
-    AnalysisScoreItem,
+    BabAnalysis,
     SimilarChunkItem,
     SimulationMessageResponse,
     SimulationStartResponse,
@@ -29,7 +29,7 @@ __all__ = [
     "SimilarityRequest",
     # responses
     "AnalysisResponse",
-    "AnalysisScoreItem",
+    "BabAnalysis",
     "SimulationStartResponse",
     "SimulationMessageResponse",
     "SimilarChunkItem",

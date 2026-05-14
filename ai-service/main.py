@@ -16,9 +16,10 @@ Business logic lives in:
 """
 import logging
 from contextlib import asynccontextmanager
+from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from agents.analisis_agent import AnalisisAgent
@@ -28,7 +29,6 @@ from core.dependencies import get_embeddings, get_llm, get_supabase
 from parsers.embedder import chunk_text, embed_and_store
 from parsers.extractor import extract_text
 from schemas import (
-    AnalysisRequest,
     AnalysisResponse,
     ParseRequest,
     SimilarityRequest,
@@ -44,6 +44,8 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
+from core.config import settings
+
 # ──────────────────────────────────────────────────────────────────────────
 # App
 # ──────────────────────────────────────────────────────────────────────────
@@ -51,7 +53,11 @@ log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    log.info("TemanSkripsi AI Service v2 started")
+    log.info(
+        "TemanSkripsi AI Service v2.0 started (port %d, model=%s)",
+        settings.fastapi_port,
+        settings.llm_model,
+    )
     yield
     log.info("TemanSkripsi AI Service shutting down")
 
@@ -111,15 +117,9 @@ def health():
 # ──────────────────────────────────────────────────────────────────────────
 
 
-@app.post("/documents/parse", status_code=202, tags=["Documents"])
+@app.post("/documents/parse", status_code=202, tags=["Documents"], include_in_schema=False)
 def parse_document(req: ParseRequest, bg: BackgroundTasks):
-    """
-    Trigger async document parsing and embedding.
-
-    - **document_id**: UUID of the document record
-    - **file_path**: Path inside Supabase Storage `documents` bucket
-    - **file_type**: `"pdf"` or `"pptx"`
-    """
+    """Trigger async document parsing and embedding (internal — called by backend)."""
     bg.add_task(_parse_and_embed, req.document_id, req.file_path, req.file_type)
     return {"message": "Parsing dimulai", "document_id": req.document_id}
 
@@ -130,22 +130,36 @@ def parse_document(req: ParseRequest, bg: BackgroundTasks):
 
 
 @app.post("/documents/analyze", response_model=AnalysisResponse, tags=["Analysis"])
-def analyze_document(req: AnalysisRequest):
+async def analyze_document(
+    file: UploadFile = File(..., description="File PDF atau PPTX skripsi"),
+    major: str = Form(..., description="Faculty slug: pendidikan | hukum | bisnis | teknologi | humaniora | kesehatan"),
+    jurusan: str = Form(..., description="Program slug, e.g. pendidikan-matematika, hukum-pidana, teknik-informatika"),
+    judul_skripsi: str = Form(..., description="Judul lengkap skripsi"),
+    analysis_id: Optional[str] = Form(None, description="(Opsional) UUID analyses record — jika diisi, hasil disimpan ke database"),
+):
     """
-    Analyze and score a thesis across 6 academic aspects using RAG + LangChain.
+    Analisis skripsi per BAB menggunakan LangChain + Gemini.
 
-    - **context.document_id**: Thesis document UUID
-    - **context.major**: Faculty slug, e.g. `"pendidikan"`, `"hukum"`, `"bisnis"`
-    - **context.jurusan**: Program slug, e.g. `"pendidikan-matematika"`, `"hukum-pidana"`
-    - **context.judul_skripsi**: Full thesis title (used as RAG query)
-    - **analysis_id**: Pre-created `analyses` record UUID
+    Upload langsung file PDF/PPTX — tidak perlu parse terpisah.
+    Jika `analysis_id` diisi, hasil analisis otomatis disimpan ke database.
 
-    Returns structured scores (0–100) per aspect with feedback, weaknesses, suggestions,
-    and potential examiner questions.
+    **Output per bab**: `bab`, `skor` (0–100), `analisa`, `saran`
     """
+    file_type = (file.filename or "").rsplit(".", 1)[-1].lower()
+    if file_type not in ("pdf", "pptx"):
+        raise HTTPException(status_code=400, detail="File harus berformat PDF atau PPTX")
+
     try:
+        raw = await file.read()
+        text = extract_text(raw, file_type)
         agent = AnalisisAgent(get_supabase(), get_llm(), get_embeddings())
-        return agent.run(req)
+        return agent.run_from_text(
+            text=text,
+            major=major,
+            jurusan=jurusan,
+            judul_skripsi=judul_skripsi,
+            analysis_id=analysis_id,
+        )
     except Exception as exc:
         log.error("Analysis failed: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=str(exc))
@@ -218,3 +232,13 @@ def check_similarity(req: SimilarityRequest):
 
 
 
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "main:app",
+        host=settings.fastapi_host,
+        port=settings.fastapi_port,
+        reload=True,
+    )

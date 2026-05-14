@@ -24,11 +24,11 @@ def get_supabase() -> Client:
 
 @lru_cache(maxsize=1)
 def get_llm() -> ChatGoogleGenerativeAI:
-    """Singleton LangChain LLM wrapper for Gemini Flash."""
+    """Singleton LangChain LLM wrapper for Gemini."""
     return ChatGoogleGenerativeAI(
-        model=settings.chat_model,
-        google_api_key=settings.gemini_api_key,
-        temperature=0.7,
+        model=settings.llm_model,
+        google_api_key=settings.llm_api_key,
+        temperature=settings.llm_temperature,
         convert_system_message_to_human=True,
     )
 
@@ -38,6 +38,6 @@ def get_embeddings() -> GoogleGenerativeAIEmbeddings:
     """Singleton LangChain Embeddings wrapper for Gemini text-embedding-004."""
     return GoogleGenerativeAIEmbeddings(
         model=settings.embedding_model,
-        google_api_key=settings.gemini_api_key,
+        google_api_key=settings.llm_api_key,
         task_type="retrieval_query",
     )

@@ -1,6 +1,6 @@
-## Tugas: Analisis & Skoring Skripsi
+## Tugas: Analisis & Skoring Skripsi per Bab
 
-Evaluasi skripsi berikut secara objektif berdasarkan 6 aspek akademis.
+Evaluasi skripsi berikut secara objektif. Berikan analisis **per bab** yang ditemukan dalam konten.
 
 **Judul Skripsi**: {judul_skripsi}
 
@@ -10,17 +10,17 @@ Evaluasi skripsi berikut secara objektif berdasarkan 6 aspek akademis.
 
 ---
 
-## Aspek yang Dinilai
+## Instruksi Analisis
 
-Berikan skor 0–100 dan umpan balik konkret untuk setiap aspek berikut.
-Terapkan perspektif dan standar akademik sesuai jurusan yang disebutkan dalam konteks di atas.
+Identifikasi semua bab dalam skripsi dari konten di atas (umumnya BAB I–V, namun sesuaikan jika berbeda).
+Untuk **setiap bab**, berikan:
 
-1. **Kejelasan Latar Belakang** — Masalah spesifik, ada data/fakta pendukung, urutan logika umum→khusus jelas, tujuan relevan
-2. **Rumusan Masalah & Tujuan** — Tidak ambigu, konsisten dengan latar belakang, spesifik dan terukur, tidak terlalu luas
-3. **Kekuatan Metodologi** — Metode sesuai tujuan, prosedur dijelaskan langkah demi langkah, variabel terdefinisi, alasan pemilihan kuat
-4. **Kualitas Analisis & Pembahasan** — Interpretatif bukan hanya deskriptif, ada keterkaitan teori/referensi, data mendukung argumen, tidak ada lompatan logika
-5. **Konsistensi Pembahasan** — Latar belakang, metode, dan hasil saling terhubung, tidak kontradiksi antar bab, istilah konsisten
-6. **Kualitas Kesimpulan** — Menjawab rumusan masalah, berbasis hasil penelitian (bukan opini baru), ringkas dan jelas
+- **bab**: nama bab, contoh `"BAB I – Pendahuluan"`, `"BAB III – Metode Penelitian"`
+- **skor**: nilai 0–100 berdasarkan kualitas penulisan, kelengkapan, dan ketepatan isi bab tersebut
+- **analisa**: analisis mendalam (3–5 kalimat) mengacu langsung pada isi bab — bukan generik
+- **saran**: saran perbaikan konkret dan spesifik (2–3 kalimat) untuk bab tersebut
+
+Terapkan standar akademik sesuai jurusan yang disebutkan dalam konteks sistem di atas.
 
 ---
 
@@ -29,28 +29,25 @@ Terapkan perspektif dan standar akademik sesuai jurusan yang disebutkan dalam ko
 Balas HANYA dengan JSON berikut, tanpa teks tambahan sebelum atau sesudah:
 
 {
-  "overall": <rata-rata semua skor, dibulatkan 1 desimal>,
-  "summary": "<ringkasan kekuatan dan kelemahan utama, 2–3 kalimat>",
-  "scores": [
-    {"aspect": "Kejelasan Latar Belakang", "score": <0-100>, "feedback": "<umpan balik spesifik mengacu isi skripsi>"},
-    {"aspect": "Rumusan Masalah & Tujuan", "score": <0-100>, "feedback": "<umpan balik>"},
-    {"aspect": "Kekuatan Metodologi", "score": <0-100>, "feedback": "<umpan balik>"},
-    {"aspect": "Kualitas Analisis & Pembahasan", "score": <0-100>, "feedback": "<umpan balik>"},
-    {"aspect": "Konsistensi Pembahasan", "score": <0-100>, "feedback": "<umpan balik>"},
-    {"aspect": "Kualitas Kesimpulan", "score": <0-100>, "feedback": "<umpan balik>"}
-  ],
-  "weaknesses": [
-    "<kelemahan utama 1 — spesifik>",
-    "<kelemahan utama 2>",
-    "<kelemahan utama 3>"
-  ],
-  "suggestions": [
-    "<saran perbaikan konkret 1>",
-    "<saran perbaikan konkret 2>",
-    "<saran perbaikan konkret 3>"
+  "overall": <rata-rata skor semua bab, dibulatkan 1 desimal>,
+  "summary": "<ringkasan keseluruhan kekuatan dan kelemahan skripsi, 2–3 kalimat>",
+  "babs": [
+    {
+      "bab": "BAB I – Pendahuluan",
+      "skor": <0-100>,
+      "analisa": "<analisis spesifik mengacu isi bab>",
+      "saran": "<saran perbaikan konkret>"
+    },
+    {
+      "bab": "BAB II – Tinjauan Pustaka",
+      "skor": <0-100>,
+      "analisa": "<analisis>",
+      "saran": "<saran>"
+    }
+    // ... lanjutkan untuk semua bab yang ditemukan
   ],
   "potential_questions": [
-    "<pertanyaan yang mungkin diajukan penguji saat sidang 1>",
+    "<pertanyaan realistis yang mungkin diajukan dosen penguji — spesifik terhadap isi 1>",
     "<pertanyaan 2>",
     "<pertanyaan 3>",
     "<pertanyaan 4>"
@@ -58,6 +55,7 @@ Balas HANYA dengan JSON berikut, tanpa teks tambahan sebelum atau sesudah:
 }
 
 Catatan penting:
-- Skor harus jujur mencerminkan kualitas skripsi — jangan selalu tinggi
-- Feedback harus mengacu pada isi skripsi secara spesifik, bukan generik
+- Skor harus jujur — jangan selalu tinggi, cerminkan kualitas sebenarnya
+- Analisa dan saran harus mengacu pada isi skripsi secara spesifik, bukan template generik
+- Jika konten suatu bab tidak tersedia dalam sampel, tetap sertakan bab tersebut dengan skor lebih rendah dan catatan keterbatasan data
 - Pertanyaan potensial harus realistis seperti yang ditanyakan dosen penguji sungguhan
