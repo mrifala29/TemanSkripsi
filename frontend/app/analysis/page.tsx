@@ -13,6 +13,7 @@ type Analysis = {
   summary: string | null
   status: string
   created_at: string
+  analysis_type: 'proposal' | 'final_report' | null
 }
 
 type Score = {
@@ -27,6 +28,25 @@ type Document = {
   file_name: string
   title: string | null
   parse_status: string
+  document_type: 'proposal' | 'final_report' | null
+}
+
+const PROPOSAL_LABELS: Record<string, string> = {
+  latar_belakang: 'Latar Belakang',
+  rumusan_masalah: 'Rumusan Masalah',
+  tujuan: 'Tujuan Penelitian',
+  metode_penelitian: 'Metode Penelitian',
+  daftar_pustaka: 'Daftar Pustaka',
+}
+
+const LAPORAN_LABELS: Record<string, string> = {
+  abstrak: 'Abstrak',
+  latar_belakang: 'Latar Belakang',
+  rumusan_masalah: 'Rumusan Masalah',
+  tujuan: 'Tujuan Penelitian',
+  metode_penelitian: 'Metode Penelitian',
+  hasil_dan_pembahasan: 'Hasil dan Pembahasan',
+  kesimpulan_saran: 'Kesimpulan & Saran',
 }
 
 function DocumentPicker() {
@@ -94,6 +114,7 @@ function AnalysisContent() {
   const [analyses, setAnalyses] = useState<Analysis[]>([])
   const [selected, setSelected] = useState<Analysis | null>(null)
   const [scores, setScores] = useState<Score[]>([])
+  const [doc, setDoc] = useState<Document | null>(null)
   const [loading, setLoading] = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
 
@@ -105,6 +126,14 @@ function AnalysisContent() {
   async function loadAnalyses() {
     setLoading(true)
     try {
+      // Fetch document info for type detection
+      try {
+        const docRes = await api.getDocuments()
+        const docData: Document[] = docRes.data || []
+        const found = docData.find(d => d.id === docId) || null
+        setDoc(found)
+      } catch { /* non-critical */ }
+
       const res = await api.getAnalyses()
       const data: Analysis[] = res.data || []
       const filtered = docId ? data.filter(a => a.document_id === docId) : data
@@ -136,6 +165,14 @@ function AnalysisContent() {
     } finally {
       setAnalyzing(false)
     }
+  }
+
+  const getAspectLabel = (category: string) => {
+    const docType = selected?.analysis_type || doc?.document_type
+    if (docType === 'proposal') return PROPOSAL_LABELS[category] || category
+    if (docType === 'final_report') return LAPORAN_LABELS[category] || category
+    // Fallback: check both maps
+    return PROPOSAL_LABELS[category] || LAPORAN_LABELS[category] || category
   }
 
   const scoreColor = (score: number, max: number) => {
@@ -224,11 +261,24 @@ function AnalysisContent() {
                       <span className="text-xl text-gray-400">/100</span>
                     </p>
                   </div>
-                  <span className={`text-xs px-2.5 py-1 rounded-full border ${
-                    selected.status === 'done' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}>
-                    {selected.status === 'done' ? '✅ Selesai' : '⏳ ' + selected.status}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    {(() => {
+                      const docType = selected.analysis_type || doc?.document_type
+                      if (docType === 'proposal') return (
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">Proposal</span>
+                      )
+                      if (docType === 'final_report') return (
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Laporan Akhir</span>
+                      )
+                      return null
+                    })()
+                    }
+                    <span className={`text-xs px-2.5 py-1 rounded-full border ${
+                      selected.status === 'done' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {selected.status === 'done' ? '✅ Selesai' : '⏳ ' + selected.status}
+                    </span>
+                  </div>
                 </div>
                 {selected.summary && (
                   <p className="mt-4 text-sm text-gray-600 bg-gray-50 rounded-lg p-4 leading-relaxed border border-gray-100">
@@ -245,7 +295,7 @@ function AnalysisContent() {
                     {scores.map((s, i) => (
                       <div key={i}>
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm text-gray-700">{s.category}</p>
+                          <p className="text-sm text-gray-700">{getAspectLabel(s.category)}</p>
                           <p className={`text-sm font-semibold ${scoreColor(s.score, s.max_score)}`}>
                             {s.score}/{s.max_score}
                           </p>

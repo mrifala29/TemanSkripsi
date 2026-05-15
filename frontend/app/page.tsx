@@ -28,7 +28,7 @@ const FEATURES = [
   {
     icon: '📊',
     title: 'Analisa & Penilaian',
-    desc: 'Dapatkan skor 0–100 per aspek: latar belakang, metodologi, analisis data, konsistensi argumen, hingga kesimpulan.',
+    desc: 'Evaluasi terstruktur dengan 5 aspek (Proposal) atau 7 aspek (Laporan Akhir) — skor objektif per aspek lengkap saran perbaikan.',
     link: '/analisa',
     color: 'border-emerald-100 hover:border-emerald-300',
     iconBg: 'bg-emerald-50',
@@ -37,41 +37,41 @@ const FEATURES = [
   },
   {
     icon: '🔍',
-    title: 'Uji Kesamaan & Teks AI',
-    desc: 'Periksa estimasi kemiripan teks dan indikasi konten berbantuan AI per bab — untuk deteksi dini sebelum hari sidang.',
+    title: 'Cek Kesamaan & Typo',
+    desc: 'Periksa estimasi kemiripan teks + deteksi typo lengkap dengan lokasi halaman dan baris — untuk Laporan Akhir.',
     link: '/plagiasi',
     color: 'border-amber-100 hover:border-amber-300',
     iconBg: 'bg-amber-50',
-    tag: 'Deteksi AI',
+    tag: 'Deteksi Typo',
     tagColor: 'bg-amber-500 text-white',
   },
 ]
 
 const FEATURE_STEPS: Record<string, { icon: string; num: string; title: string; desc: string }[]> = {
   simulasi: [
-    { icon: '📤', num: '01', title: 'Unggah Dokumen',      desc: 'Unggah file PDF atau PPT skripsi ke sistem' },
+    { icon: '📤', num: '01', title: 'Unggah Dokumen',      desc: 'Unggah file PDF skripsi ke sistem' },
     { icon: '🤖', num: '02', title: 'AI Membaca Dokumen',  desc: 'AI menganalisis seluruh isi dokumen secara mendalam' },
     { icon: '💬', num: '03', title: 'Sesi Dimulai',        desc: 'AI mengajukan pertanyaan layaknya dosen penguji' },
     { icon: '🔁', num: '04', title: 'Pendalaman Jawaban',  desc: 'Jawaban yang kurang kuat akan digali lebih jauh' },
   ],
   analisa: [
-    { icon: '📤', num: '01', title: 'Unggah Dokumen',    desc: 'Unggah skripsi dalam format PDF atau PPT' },
-    { icon: '🔬', num: '02', title: 'AI Menganalisis',   desc: 'AI menilai setiap aspek penulisan skripsi secara objektif' },
-    { icon: '📊', num: '03', title: 'Skor per Aspek',    desc: 'Nilai 0–100 untuk setiap aspek penilaian' },
-    { icon: '💡', num: '04', title: 'Rekomendasi Aksi',  desc: 'Saran perbaikan spesifik yang dapat langsung ditindaklanjuti' },
+    { icon: '📤', num: '01', title: 'Unggah & Pilih Tipe',    desc: 'Upload PDF dan pilih tipe: Proposal atau Laporan Akhir' },
+    { icon: '🔬', num: '02', title: 'AI Menganalisis',        desc: 'AI menilai setiap aspek sesuai tipe dokumen secara objektif' },
+    { icon: '📊', num: '03', title: 'Skor per Aspek',         desc: '5 aspek untuk Proposal, 7 aspek untuk Laporan Akhir (0–100 per aspek)' },
+    { icon: '💡', num: '04', title: 'Rekomendasi Aksi',       desc: 'Saran perbaikan spesifik dan potensi pertanyaan sidang' },
   ],
   plagiasi: [
-    { icon: '📤', num: '01', title: 'Unggah Dokumen',    desc: 'Unggah skripsi dalam format PDF atau PPT' },
-    { icon: '🔍', num: '02', title: 'Analisis Kemiripan', desc: 'Sistem mengukur kemiripan teks menggunakan pemrosesan vektor' },
-    { icon: '🤖', num: '03', title: 'Deteksi Teks AI',  desc: 'Estimasi persentase teks yang terindikasi dihasilkan AI' },
-    { icon: '📋', num: '04', title: 'Laporan per Bab',  desc: 'Hasil ditampilkan per bab lengkap dengan visualisasi' },
+    { icon: '📤', num: '01', title: 'Unggah Laporan Akhir',   desc: 'Upload PDF Laporan Akhir ke sistem' },
+    { icon: '🔍', num: '02', title: 'Analisis Kemiripan',     desc: 'Sistem mengukur kemiripan teks menggunakan pemrosesan vektor' },
+    { icon: '✏️', num: '03', title: 'Deteksi Typo',           desc: 'Sistem mencari typo dan menampilkan lokasi halaman serta baris' },
+    { icon: '📋', num: '04', title: 'Laporan Lengkap',        desc: 'Kemiripan per bab + daftar typo dengan konteks kalimat' },
   ],
 }
 
 const TAB_CONFIG = [
   { key: 'simulasi', label: '🎤 Simulasi Sidang',       activeClass: 'bg-indigo-600 text-white border-indigo-600' },
   { key: 'analisa',  label: '📊 Analisa & Penilaian',   activeClass: 'bg-emerald-600 text-white border-emerald-600' },
-  { key: 'plagiasi', label: '🔍 Uji Kesamaan & AI',     activeClass: 'bg-amber-500 text-white border-amber-500' },
+  { key: 'plagiasi', label: '🔍 Cek Kesamaan & Typo',   activeClass: 'bg-amber-500 text-white border-amber-500' },
 ]
 
 const TAB_COLORS: Record<string, { line: string; border: string; num: string }> = {
@@ -81,19 +81,21 @@ const TAB_COLORS: Record<string, { line: string; border: string; num: string }> 
 }
 
 const ANALYSIS_SCORES = [
-  { aspect: 'Latar Belakang',         score: 82 },
-  { aspect: 'Rumusan Masalah',        score: 75 },
-  { aspect: 'Metodologi Penelitian',  score: 68 },
-  { aspect: 'Analisis & Pembahasan',  score: 85 },
-  { aspect: 'Kesimpulan & Saran',     score: 79 },
+  { aspect: 'Abstrak',              score: 82 },
+  { aspect: 'Latar Belakang',       score: 78 },
+  { aspect: 'Rumusan Masalah',      score: 75 },
+  { aspect: 'Tujuan Penelitian',    score: 82 },
+  { aspect: 'Metode Penelitian',    score: 68 },
+  { aspect: 'Hasil dan Pembahasan', score: 85 },
+  { aspect: 'Kesimpulan & Saran',   score: 79 },
 ]
 
 const SIMILARITY_CHAPTERS = [
-  { chapter: 'BAB I – Pendahuluan',         similarity: 12, ai: 15 },
-  { chapter: 'BAB II – Tinjauan Pustaka',   similarity: 28, ai: 35 },
-  { chapter: 'BAB III – Metodologi',        similarity: 10, ai: 18 },
-  { chapter: 'BAB IV – Hasil & Pembahasan', similarity: 14, ai: 20 },
-  { chapter: 'BAB V – Kesimpulan',          similarity:  8, ai: 12 },
+  { chapter: 'BAB I – Pendahuluan',         similarity: 12, typos: 3 },
+  { chapter: 'BAB II – Tinjauan Pustaka',   similarity: 28, typos: 7 },
+  { chapter: 'BAB III – Metodologi',        similarity: 10, typos: 2 },
+  { chapter: 'BAB IV – Hasil & Pembahasan', similarity: 14, typos: 5 },
+  { chapter: 'BAB V – Kesimpulan',          similarity:  8, typos: 1 },
 ]
 
 const CHAT_DEMO = [
@@ -458,11 +460,11 @@ export default function Home() {
                 Objektif. Menyeluruh.<br />Per Aspek.
               </h2>
               <p className="text-gray-500 mb-8 leading-relaxed text-sm">
-                AI mengevaluasi skripsimu dari lima aspek utama — mulai dari latar belakang hingga kesimpulan. Skor dan rekomendasi perbaikan tersedia segera setelah analisis selesai.
+                AI mengevaluasi skripsimu sesuai tipenya — 5 aspek untuk Proposal, 7 aspek untuk Laporan Akhir. Skor dan rekomendasi perbaikan tersedia segera setelah analisis selesai.
               </p>
               <div className="space-y-5">
                 {[
-                  { icon: '📏', title: '5 Aspek Penilaian', desc: 'Latar belakang, metodologi, analisis data, konsistensi argumen, dan kesimpulan' },
+                  { icon: '📐', title: '5 aspek (Proposal) atau 7 aspek (Laporan Akhir)', desc: 'Rubrik berbeda untuk dua tahap berbeda — Sempro dan Sidang' },
                   { icon: '🎯', title: 'Skor 0–100 per Aspek', desc: 'Nilai objektif berbasis isi dokumenmu, bukan rubrik generik' },
                   { icon: '📝', title: 'Rekomendasi Perbaikan', desc: 'Ketahui dengan tepat apa yang perlu diperbaiki sebelum hari sidang' },
                 ].map((item, i) => (
@@ -491,18 +493,18 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
               <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1 rounded-full">
-                Uji Kesamaan & Teks AI
+                Cek Kesamaan & Typo
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-5 mb-4 leading-tight">
                 Transparan. Cepat.<br />Per Bab.
               </h2>
               <p className="text-gray-500 mb-8 leading-relaxed text-sm">
-                Periksa estimasi kemiripan teks dan indikasi konten berbantuan AI — ditampilkan per bab agar kamu tahu bagian mana yang perlu mendapat perhatian sebelum sidang.
+                Periksa estimasi kemiripan teks + deteksi typo otomatis. Setiap typo ditampilkan dengan halaman dan baris agar mudah diperbaiki sebelum pengumpulan.
               </p>
               <div className="space-y-5">
                 {[
                   { icon: '📐', title: 'Estimasi Kemiripan Teks', desc: 'Persentase kemiripan teks antardokumen, disajikan per bab' },
-                  { icon: '🤖', title: 'Indikasi Teks Berbantuan AI', desc: 'Estimasi proporsi teks yang terindikasi dihasilkan oleh AI' },
+                  { icon: '✏️', title: 'Deteksi Typo Otomatis', desc: 'Setiap typo dilengkapi lokasi halaman, baris, dan konteks kalimat' },
                   { icon: '⚠️', title: 'Laporan Transparan', desc: 'Alat bantu deteksi dini — bukan pengganti Turnitin atau layanan profesional' },
                 ].map((item, i) => (
                   <motion.div key={i} initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="flex gap-4 items-start">
@@ -525,7 +527,7 @@ export default function Home() {
               <div className="bg-amber-500 px-5 py-4 flex items-center gap-3">
                 <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-lg">🔍</div>
                 <div>
-                  <p className="text-white text-sm font-semibold">Laporan Kesamaan & AI</p>
+                  <p className="text-white text-sm font-semibold">Laporan Kesamaan & Typo</p>
                   <p className="text-amber-100 text-xs">Analisa per bab</p>
                 </div>
               </div>
@@ -535,8 +537,8 @@ export default function Home() {
                   <p className="text-xs text-gray-500 mt-0.5">Estimasi Kemiripan</p>
                 </div>
                 <div className="px-5 py-4 text-center">
-                  <p className="text-2xl font-extrabold text-gray-900">22%</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Estimasi Teks AI</p>
+                  <p className="text-2xl font-extrabold text-gray-900">18</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Typo Ditemukan</p>
                 </div>
               </div>
               <div className="p-5 space-y-4 bg-gray-50">
@@ -546,22 +548,17 @@ export default function Home() {
                       <span className="text-xs text-gray-700 font-medium">{ch.chapter}</span>
                       <div className="flex gap-1.5">
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.similarity <= 15 ? 'text-emerald-700 bg-emerald-50' : ch.similarity <= 30 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>{ch.similarity}% mirip</span>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.ai <= 20 ? 'text-emerald-700 bg-emerald-50' : ch.ai <= 40 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>{ch.ai}% AI</span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.typos === 0 ? 'text-emerald-700 bg-emerald-50' : ch.typos <= 5 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>{ch.typos} typo</span>
                       </div>
                     </div>
-                    <div className="flex gap-1.5">
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                        <motion.div className={`h-full rounded-full ${ch.similarity <= 15 ? 'bg-emerald-500' : ch.similarity <= 30 ? 'bg-amber-400' : 'bg-red-500'}`} initial={{ width: 0 }} whileInView={{ width: `${Math.min(ch.similarity * 2.5, 100)}%` }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.1 }} />
-                      </div>
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                        <motion.div className={`h-full rounded-full ${ch.ai <= 20 ? 'bg-emerald-500' : ch.ai <= 40 ? 'bg-amber-400' : 'bg-red-500'}`} initial={{ width: 0 }} whileInView={{ width: `${Math.min(ch.ai * 2.5, 100)}%` }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.1 + 0.05 }} />
-                      </div>
+                    <div className="bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                      <motion.div className={`h-full rounded-full ${ch.similarity <= 15 ? 'bg-emerald-500' : ch.similarity <= 30 ? 'bg-amber-400' : 'bg-red-500'}`} initial={{ width: 0 }} whileInView={{ width: `${Math.min(ch.similarity * 2.5, 100)}%` }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.1 }} />
                     </div>
                   </div>
                 ))}
               </div>
               <div className="px-5 py-3 border-t border-gray-100 bg-white">
-                <p className="text-[10px] text-gray-400">⚠️ Hasil merupakan estimasi. Bukan pengganti Turnitin atau alat deteksi AI profesional.</p>
+                <p className="text-[10px] text-gray-400">⚠️ Hasil merupakan estimasi internal. Bukan pengganti Turnitin.</p>
               </div>
             </motion.div>
           </div>

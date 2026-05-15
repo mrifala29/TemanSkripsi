@@ -21,7 +21,7 @@ from core.config import settings
 from prompts.loader import PromptLoader
 from rag.retriever import chunks_to_context, retrieve_chunks
 from schemas.requests import AnalysisRequest
-from schemas.responses import AnalysisResponse, BabAnalysis
+from schemas.responses import AnalysisResponse, AspectAnalysis
 
 log = logging.getLogger(__name__)
 
@@ -81,11 +81,15 @@ class AnalisisAgent:
         jurusan: str,
         judul_skripsi: str,
         analysis_id: Optional[str] = None,
+        document_id: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> AnalysisResponse:
         """
         Run analysis directly from extracted text — no RAG DB lookup.
         Used by the /documents/analyze endpoint (Swagger + production upload path).
         If `analysis_id` is given, results are persisted to the database.
+        If `analysis_id` is None but `document_id` + `user_id` are given, a new
+        analyses record is auto-created before saving.
         """
         from parsers.embedder import chunk_text
         chunks_raw = chunk_text(text)
@@ -128,32 +132,34 @@ class AnalisisAgent:
 
         data: dict = self.chain.invoke([HumanMessage(content=prompt)])
 
-        babs = [
-            BabAnalysis(
-                bab=b.get("bab", ""),
-                skor=float(b.get("skor", 0)),
-                analisa=b.get("analisa", ""),
-                saran=b.get("saran", ""),
+        aspects = [
+            AspectAnalysis(
+                aspek=a.get("aspek", ""),
+                label=a.get("label", ""),
+                skor=float(a.get("skor", 0)),
+                analisa=a.get("analisa", ""),
+                saran=a.get("saran", ""),
             )
-            for b in data.get("babs", [])
+            for a in data.get("aspects", [])
         ]
 
         return AnalysisResponse(
             overall_score=float(data.get("overall", 0)),
             summary=data.get("summary", ""),
-            babs=babs,
-            potential_questions=data.get("potential_questions", []),
+            aspects=aspects,
         )
 
     def _save(self, analysis_id: str, result: AnalysisResponse) -> None:
         rows = [
             {
                 "analysis_id": analysis_id,
-                "aspect":      b.bab,
-                "score":       b.skor,
-                "notes":       f"{b.analisa}\n\nSaran: {b.saran}",
+                "aspect":      a.aspek,
+                "score":       a.skor,
+                "notes":       a.analisa,   # backward compat
+                "analisa":     a.analisa,
+                "saran":       a.saran,
             }
-            for b in result.babs
+            for a in result.aspects
         ]
         if rows:
             self.supabase.table("analysis_scores").insert(rows).execute()

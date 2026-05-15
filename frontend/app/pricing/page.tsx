@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
-type DocType = 'ppt' | 'fulltext'
+type DocType = 'sempro' | 'sidang'
 
 type Variant = {
   priceLabel: string
@@ -20,8 +20,8 @@ type Feature = {
   desc: string
   howItWorks: string
   hasBothTypes: boolean
-  ppt: Variant | null
-  fulltext: Variant
+  sempro: Variant | null
+  sidang: Variant
 }
 
 const FEATURES: Feature[] = [
@@ -32,28 +32,30 @@ const FEATURES: Feature[] = [
     desc: 'Latihan tanya-jawab dengan AI dosen penguji',
     howItWorks: 'AI bertanya → kamu jawab → AI evaluasi + tanya lanjutan (berulang)',
     hasBothTypes: true,
-    ppt: {
-      priceLabel: 'IDR 15.000',
-      limit: 'Maks 50 slide PPT/PPTX',
-      guarantee: 'Min. 5 putaran tanya-jawab',
+    sempro: {
+      priceLabel: 'IDR 12.000',
+      limit: 'Maks 60 halaman PDF',
+      guarantee: '1 sesi (min. 5 tanya-jawab)',
       features: [
         '1 sesi simulasi penuh',
-        'Pertanyaan berbasis isi slide',
+        'Pertanyaan berbasis isi proposal',
+        'Persona dosen advisory & gatekeeping',
         'AI evaluasi jawaban + follow-up tiap giliran',
-        'Maks 50 slide PPT/PPTX',
-        'Jaminan min. 5 putaran',
+        'Maks 60 halaman PDF',
+        'Jaminan min. 5 tanya-jawab',
       ],
     },
-    fulltext: {
-      priceLabel: 'IDR 25.000',
+    sidang: {
+      priceLabel: 'IDR 20.000',
       limit: 'Maks 100 halaman PDF',
-      guarantee: 'Min. 10 putaran tanya-jawab',
+      guarantee: '1 sesi (min. 10 tanya-jawab)',
       features: [
         '1 sesi simulasi penuh',
-        'Pertanyaan mendalam per bab skripsi',
+        'Pertanyaan mendalam per bab laporan',
+        'Persona dosen kritis & evidence-demanding',
         'AI evaluasi jawaban + follow-up tiap giliran',
         'Maks 100 halaman PDF',
-        'Jaminan min. 10 putaran',
+        'Jaminan min. 10 tanya-jawab',
       ],
     },
   },
@@ -61,26 +63,27 @@ const FEATURES: Feature[] = [
     key: 'analisa',
     icon: '📊',
     name: 'Analisa & Penilaian',
-    desc: 'Skor 6 aspek skripsi + feedback dari AI',
+    desc: 'Skor per aspek skripsi + feedback dari AI',
     howItWorks: 'Hasil dalam 1–3 menit setelah dokumen diproses',
     hasBothTypes: true,
-    ppt: {
-      priceLabel: 'IDR 10.000',
-      limit: 'Maks 50 slide PPT/PPTX',
-      guarantee: 'Skor 6 aspek + feedback',
+    sempro: {
+      priceLabel: 'IDR 12.000',
+      limit: 'Maks 60 halaman PDF',
+      guarantee: 'Skor 5 aspek + feedback',
       features: [
-        'Skor per aspek 0–100',
+        'Skor 5 aspek proposal (0–100)',
         'Feedback konkret tiap aspek',
         'Identifikasi kelemahan utama',
-        'Maks 50 slide PPT/PPTX',
+        'Saran perbaikan spesifik',
+        'Maks 60 halaman PDF',
       ],
     },
-    fulltext: {
-      priceLabel: 'IDR 20.000',
+    sidang: {
+      priceLabel: 'IDR 18.000',
       limit: 'Maks 100 halaman PDF',
-      guarantee: 'Skor + potensi pertanyaan sidang',
+      guarantee: 'Skor 7 aspek + potensi pertanyaan',
       features: [
-        'Skor per aspek 0–100',
+        'Skor 7 aspek laporan (0–100)',
         'Feedback konkret tiap aspek',
         'Potensi pertanyaan sidang',
         'Saran perbaikan spesifik',
@@ -91,18 +94,18 @@ const FEATURES: Feature[] = [
   {
     key: 'kesamaan',
     icon: '🔍',
-    name: 'Cek Kesamaan',
-    desc: 'Laporan kemiripan dengan koleksi di sistem',
-    howItWorks: 'Perbandingan internal — bukan vs internet',
+    name: 'Cek Kesamaan & Typo',
+    desc: 'Kemiripan internal + deteksi typo dengan lokasi',
+    howItWorks: 'Perbandingan internal — bukan vs internet. Khusus Laporan Akhir.',
     hasBothTypes: false,
-    ppt: null,
-    fulltext: {
+    sempro: null,
+    sidang: {
       priceLabel: 'IDR 5.000',
       limit: 'Maks 100 halaman PDF',
-      guarantee: 'Persentase + bagian paling mirip',
+      guarantee: 'Persentase + daftar typo + lokasi',
       features: [
         'Persentase kemiripan overall',
-        'Bagian teks yang paling mirip',
+        'Deteksi typo + lokasi halaman & baris',
         'Dibanding dokumen lain di sistem',
         'Maks 100 halaman PDF',
       ],
@@ -115,61 +118,56 @@ type Bundle = {
   name: string
   desc: string
   badge?: string
-  ppt: { priceLabel: string; normalLabel: string; save: string; includes: string[] }
-  fulltext: { priceLabel: string; normalLabel: string; save: string; includes: string[] }
+  sempro: { priceLabel: string; normalLabel: string; save: string; includes: string[] } | null
+  sidang: { priceLabel: string; normalLabel: string; save: string; includes: string[] }
 }
 
 const BUNDLES: Bundle[] = [
   {
-    icon: '🔎',
-    name: 'Sidang + Cek Kesamaan',
-    desc: 'Latihan sidang & periksa originalitas dokumen',
-    ppt: {
-      priceLabel: 'IDR 17.000',
-      normalLabel: 'IDR 20.000',
-      save: 'Hemat 15%',
-      includes: ['1× Simulasi PPT', '1× Cek Kesamaan'],
+    icon: '📝',
+    name: 'Paket Sempro',
+    desc: 'Simulasi + Analisa untuk Seminar Proposal',
+    sempro: {
+      priceLabel: 'IDR 18.000',
+      normalLabel: 'IDR 24.000',
+      save: 'Hemat 25%',
+      includes: ['1× Simulasi Sempro', '1× Analisa Sempro'],
     },
-    fulltext: {
-      priceLabel: 'IDR 25.000',
-      normalLabel: 'IDR 30.000',
-      save: 'Hemat 17%',
-      includes: ['1× Simulasi Fulltext', '1× Cek Kesamaan'],
+    sidang: {
+      priceLabel: 'IDR 18.000',
+      normalLabel: 'IDR 24.000',
+      save: 'Hemat 25%',
+      includes: ['1× Simulasi Sempro', '1× Analisa Sempro'],
     },
   },
   {
     icon: '🎯',
-    name: 'Sidang + Analisa',
-    desc: 'Latihan sidang & temukan kelemahan skripsi',
+    name: 'Paket Sidang',
+    desc: 'Simulasi + Analisa untuk Sidang Akhir',
     badge: 'TERPOPULER',
-    ppt: {
-      priceLabel: 'IDR 20.000',
-      normalLabel: 'IDR 25.000',
-      save: 'Hemat 20%',
-      includes: ['1× Simulasi PPT', '1× Analisa PPT'],
+    sempro: {
+      priceLabel: 'IDR 28.000',
+      normalLabel: 'IDR 38.000',
+      save: 'Hemat 26%',
+      includes: ['1× Simulasi Sidang', '1× Analisa Sidang'],
     },
-    fulltext: {
-      priceLabel: 'IDR 35.000',
-      normalLabel: 'IDR 45.000',
-      save: 'Hemat 22%',
-      includes: ['1× Simulasi Fulltext', '1× Analisa Fulltext'],
+    sidang: {
+      priceLabel: 'IDR 28.000',
+      normalLabel: 'IDR 38.000',
+      save: 'Hemat 26%',
+      includes: ['1× Simulasi Sidang', '1× Analisa Sidang'],
     },
   },
   {
     icon: '⭐',
     name: 'Paket Lengkap',
-    desc: 'Semua fitur sekaligus — persiapan maksimal',
-    ppt: {
-      priceLabel: 'IDR 24.000',
-      normalLabel: 'IDR 30.000',
-      save: 'Hemat 20%',
-      includes: ['1× Simulasi PPT', '1× Analisa PPT', '1× Cek Kesamaan'],
-    },
-    fulltext: {
-      priceLabel: 'IDR 39.000',
-      normalLabel: 'IDR 50.000',
-      save: 'Hemat 22%',
-      includes: ['1× Simulasi Fulltext', '1× Analisa Fulltext', '1× Cek Kesamaan'],
+    desc: 'Simulasi Sidang + Analisa + Cek Kesamaan',
+    sempro: null,
+    sidang: {
+      priceLabel: 'IDR 32.000',
+      normalLabel: 'IDR 43.000',
+      save: 'Hemat 26%',
+      includes: ['1× Simulasi Sidang', '1× Analisa Sidang', '1× Cek Kesamaan & Typo'],
     },
   },
 ]
@@ -177,14 +175,14 @@ const BUNDLES: Bundle[] = [
 const FAQ = [
   {
     q: 'Bagaimana cara kerja sesi simulasi sidang?',
-    a: 'Setiap giliran berjalan seperti ini: AI mengajukan pertanyaan → kamu menjawab → AI mengevaluasi jawabanmu dan langsung mengajukan pertanyaan lanjutan. Proses ini berulang hingga kamu mengakhiri sesi. Di setiap giliran, kamu mendapat evaluasi sekaligus pertanyaan baru.',
+    a: 'Setiap giliran berjalan seperti ini: AI mengajukan pertanyaan → kamu menjawab → AI mengevaluasi jawabanmu dan langsung mengajukan pertanyaan lanjutan. Proses ini berulang hingga kamu mengakhiri sesi.',
   },
   {
-    q: 'Apa bedanya PPT dan Fulltext?',
-    a: 'PPT (slide sidang): cocok untuk latihan cepat atau jika skripsi belum final. AI membaca isi slide. Fulltext (PDF skripsi lengkap): analisis jauh lebih mendalam karena AI membaca seluruh isi skripsi per bab.',
+    q: 'Apa bedanya Sempro dan Sidang?',
+    a: 'Sempro (Seminar Proposal): untuk latihan sebelum presentasi proposal. AI berperan sebagai dosen advisory yang menilai kelayakan rencana penelitian, min. 5 tanya-jawab. Sidang (Laporan Akhir): untuk latihan sebelum sidang akhir. AI berperan lebih kritis, menguji konsistensi dan validitas hasil, min. 10 tanya-jawab.',
   },
   {
-    q: 'Kenapa ada batas halaman/slide?',
+    q: 'Kenapa ada batas halaman?',
     a: 'Dokumen tebal membutuhkan lebih banyak waktu dan biaya AI untuk diproses. Batas ini menjaga kualitas layanan dan harga tetap terjangkau. Mayoritas skripsi S1 (60–90 halaman) masuk dalam batas 100 halaman.',
   },
   {
@@ -192,12 +190,12 @@ const FAQ = [
     a: 'Kredit disimpan per fitur di akunmu — tidak ada masa kedaluwarsa. Beli sesuai kebutuhan, gunakan kapan saja. Kredit Simulasi tidak bisa dipakai untuk Analisa, dan sebaliknya.',
   },
   {
-    q: 'Apa yang dijamin di "min. N giliran"?',
+    q: 'Apa yang dijamin di \"min. N tanya-jawab\"?',
     a: 'Jika sesi terputus karena error dari sistem kami sebelum mencapai minimum, kredit akan dikembalikan penuh ke akunmu.',
   },
   {
     q: 'Cek kesamaan sama seperti Turnitin?',
-    a: 'Tidak. Cek kami membandingkan skripsimu dengan dokumen lain yang ada di sistem TemanSkripsi — bukan vs internet. Ini alat bantu kewaspadaan internal, bukan pengganti Turnitin.',
+    a: 'Tidak. Cek kami membandingkan laporan akhirmu dengan dokumen lain yang ada di sistem TemanSkripsi — bukan vs internet. Ini alat bantu kewaspadaan internal, bukan pengganti Turnitin. Fitur typo juga membantu temukan salah ketik sebelum pengumpulan.',
   },
 ]
 
@@ -211,24 +209,24 @@ function Toggle({
   return (
     <div className="inline-flex items-center bg-gray-100 rounded-lg p-0.5 text-xs font-semibold">
       <button
-        onClick={() => onChange('ppt')}
+        onClick={() => onChange('sempro')}
         className={`px-3 py-1.5 rounded-md transition-all duration-200 ${
-          value === 'ppt'
+          value === 'sempro'
             ? 'bg-white text-indigo-700 shadow-sm'
             : 'text-gray-500 hover:text-gray-700'
         }`}
       >
-        📊 PPT
+        📝 Sempro
       </button>
       <button
-        onClick={() => onChange('fulltext')}
+        onClick={() => onChange('sidang')}
         className={`px-3 py-1.5 rounded-md transition-all duration-200 ${
-          value === 'fulltext'
+          value === 'sidang'
             ? 'bg-white text-indigo-700 shadow-sm'
             : 'text-gray-500 hover:text-gray-700'
         }`}
       >
-         Fulltext
+        🎓 Sidang
       </button>
     </div>
   )
@@ -236,10 +234,10 @@ function Toggle({
 
 export default function PricingPage() {
   const [featureTypes, setFeatureTypes] = useState<Record<string, DocType>>({
-    simulasi: 'fulltext',
-    analisa: 'fulltext',
+    simulasi: 'sidang',
+    analisa: 'sidang',
   })
-  const [bundleType, setBundleType] = useState<DocType>('fulltext')
+  const [bundleType, setBundleType] = useState<DocType>('sidang')
 
   function setFType(key: string, v: DocType) {
     setFeatureTypes((prev) => ({ ...prev, [key]: v }))
@@ -252,7 +250,7 @@ export default function PricingPage() {
         <div className="max-w-5xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-              🎁 Bonus registrasi: 1 sesi Simulasi PPT gratis
+              🎁 Bonus registrasi: 1 sesi Simulasi Sempro gratis
             </div>
             <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">
               Bayar Sesuai Kebutuhan
@@ -273,14 +271,14 @@ export default function PricingPage() {
           <div className="text-center mb-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Paket Harga</h2>
             <p className="text-sm text-gray-500">
-              Pilih fitur yang kamu butuhkan, lalu pilih jenis dokumen — PPT atau skripsi lengkap.
+              Pilih fitur yang kamu butuhkan, lalu pilih tipe dokumen — Proposal (Sempro) atau Laporan Akhir (Sidang).
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {FEATURES.map((feature, i) => {
-              const selectedType = feature.hasBothTypes ? featureTypes[feature.key] : 'fulltext'
-              const variant = selectedType === 'ppt' && feature.ppt ? feature.ppt : feature.fulltext
+              const selectedType = feature.hasBothTypes ? featureTypes[feature.key] : 'sidang'
+              const variant = selectedType === 'sempro' && feature.sempro ? feature.sempro : feature.sidang
 
               return (
                 <motion.div
@@ -370,31 +368,31 @@ export default function PricingPage() {
             {/* Global bundle type toggle */}
             <div className="inline-flex items-center bg-white border border-gray-200 rounded-xl p-1 gap-1 shadow-sm">
               <button
-                onClick={() => setBundleType('ppt')}
+                onClick={() => setBundleType('sempro')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  bundleType === 'ppt'
+                  bundleType === 'sempro'
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                📊 PPT Sidang
+                📝 Sempro
               </button>
               <button
-                onClick={() => setBundleType('fulltext')}
+                onClick={() => setBundleType('sidang')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  bundleType === 'fulltext'
+                  bundleType === 'sidang'
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                 Fulltext Skripsi
+                🎓 Sidang
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
             {BUNDLES.map((bundle, i) => {
-              const v = bundleType === 'ppt' ? bundle.ppt : bundle.fulltext
+              const v = bundleType === 'sempro' && bundle.sempro ? bundle.sempro : bundle.sidang
               return (
                 <motion.div
                   key={bundle.name}

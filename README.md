@@ -80,13 +80,16 @@ frontend/middleware.ts  ← route protection (redirect ke login jika belum auth)
 ## Features (MVP)
 
 ### 1. Upload Dokumen
-* Input: PDF atau PPT
+* Input: **PDF** (Proposal atau Laporan Akhir — dipilih saat upload)
+* PPTX tidak didukung
 * Digunakan sebagai konteks AI
 
 ---
 
 ### 2. Simulasi Sidang (Core)
-Chat interaktif dengan AI sebagai dosen penguji.
+Chat interaktif dengan AI sebagai dosen penguji. Persona berbeda per tipe dokumen:
+- **Sempro (Proposal)**: advisory & gatekeeping — menilai kelayakan rencana, membimbing, min. 5 tanya-jawab
+- **Sidang (Laporan Akhir)**: kritis & evidence-demanding — menguji konsistensi dan validitas, min. 10 tanya-jawab
 
 Flow:
 1. User upload file
@@ -103,28 +106,37 @@ Rules:
 ---
 
 ### 3. Analisa Skripsi
-AI memberikan evaluasi dokumen (Proposal atau Laporan Akhir).
+AI memberikan evaluasi dokumen sesuai tipe:
+
+**Proposal (5 aspek)**:
+* Latar Belakang (20%)
+* Rumusan Masalah (25%)
+* Tujuan Penelitian (15%)
+* Metode Penelitian (30%)
+* Daftar Pustaka (10%)
+
+**Laporan Akhir (7 aspek)**:
+* Abstrak (5%)
+* Latar Belakang (10%)
+* Rumusan Masalah (15%)
+* Tujuan Penelitian (10%)
+* Metode Penelitian (20%)
+* Hasil dan Pembahasan (30%) — termasuk evaluasi Consistency & Interconnection
+* Kesimpulan dan Saran (10%)
 
 Output:
 * Skor keseluruhan (0–100)
-* Kelemahan utama (bullet points)
-* Potensi pertanyaan sidang
-* Saran perbaikan
-
-Contoh aspek penilaian:
-* Kejelasan latar belakang
-* Rumusan Masalah & Tujuan
-* Kekuatan Metodologi
-* Kualitas Analisis & Pembahasan
-* Konsistensi Pembahasan
-* Kualitas Kesimpulan
+* Skor + analisa + saran per aspek
+* Potensi pertanyaan sidang (Laporan Akhir only)
 
 ---
 
-### 4. Similarity Check (Basic - Optional)
+### 4. Cek Kesamaan & Typo (Laporan Akhir)
 
-* Cek kemiripan teks sederhana, bukan Turnitin
-* Cek persentase teks yang dibuat oleh AI pada setiap bab
+* Cek kemiripan teks internal (dibandingkan dokumen lain di sistem) — bukan Turnitin
+* Deteksi typo: salah ejaan, kesalahan tata bahasa, punctuation
+* Laporan typo mencantumkan lokasi halaman dan baris untuk memudahkan koreksi
+* Hanya untuk Laporan Akhir (`document_type: final_report`)
 
 ---
 
@@ -158,28 +170,28 @@ AI bertindak sebagai dosen penguji yang kritical dan membimbing.
 
 ### 2. Document Understanding & RAG
 AI membaca dan memahami dokumen skripsi secara mendalam.
-- **Teknologi**: LangChain + pgvector embeddings + OpenAI
+- **Teknologi**: pgvector embeddings + Gemini
 - **Proses**:
-  - Parse PDF/PPT → Extract teks
+  - Parse **PDF** → Extract teks
   - Split teks menjadi chunks (1000 chars, overlap 200)
   - Generate vector embeddings untuk setiap chunk
   - Similarity search untuk retrieve konteks relevan saat AI menjawab
 
 ### 3. Automated Analysis & Scoring
-AI menganalisis skripsi secara otomatis dan memberikan skor.
+AI menganalisis skripsi secara otomatis dan memberikan skor per tipe dokumen.
 - **Teknologi**: Structured output (Pydantic) + LLM analysis
 - **Output**:
-  - Skor per-aspek (0-100): latar belakang, rumusan masalah, metodologi, analisis, konsistensi, kesimpulan, referensi
+  - Proposal: skor 5 aspek (0-100): latar belakang, rumusan masalah, tujuan, metode penelitian, daftar pustaka
+  - Laporan Akhir: skor 7 aspek (0-100): abstrak, latar belakang, rumusan masalah, tujuan penelitian, metode penelitian, hasil dan pembahasan, kesimpulan & saran
   - Skor keseluruhan
-  - Kelemahan utama (bullet points)
-  - Potensi pertanyaan sidang
-  - Saran perbaikan spesifik
+  - Analisa teks + saran perbaikan per aspek
+  - Potensi pertanyaan sidang (Laporan Akhir only)
 
-### 4. AI-Text Detection (Optional)
-Cek estimasi persentase teks yang ditulis oleh AI di setiap bab.
-- **Teknologi**: AI text detection model
-- **Output**: Persentase estimasi AI-generated text per bab
-- **Catatan**: Estimasi kasar, bukan setara Turnitin
+### 4. Cek Kesamaan & Typo
+Cek kemiripan teks internal + deteksi typo beserta lokasi.
+- **Teknologi**: pgvector cosine similarity + LLM typo detection
+- **Output**: Persentase kemiripan overall + daftar typo dengan halaman, baris, dan konteks kalimat
+- **Catatan**: Cek internal saja, bukan setara Turnitin. Hanya untuk Laporan Akhir.
 
 ---
 ## MVP Goal

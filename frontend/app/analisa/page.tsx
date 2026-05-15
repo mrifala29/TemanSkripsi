@@ -7,22 +7,24 @@ import Link from 'next/link'
 /* ─── DATA ──────────────────────────────────────────────── */
 
 const ANALYSIS_SCORES = [
-  { aspect: 'Latar Belakang',         score: 82, feedback: 'Relevansi masalah sudah kuat. Pastikan gap penelitian dipertegas dengan data terkini.' },
-  { aspect: 'Rumusan Masalah',        score: 75, feedback: 'Rumusan cukup spesifik namun kurang terukur. Tambahkan indikator keberhasilan yang jelas.' },
-  { aspect: 'Metodologi Penelitian',  score: 68, feedback: 'Perlu justifikasi lebih kuat mengapa metode ini dipilih dibanding alternatif yang ada.' },
-  { aspect: 'Analisis & Pembahasan',  score: 85, feedback: 'Pembahasan sangat baik — argumentasi data sudah selaras dengan temuan penelitian.' },
-  { aspect: 'Kesimpulan & Saran',     score: 79, feedback: 'Kesimpulan sudah menjawab rumusan masalah. Saran perlu lebih spesifik dan actionable.' },
+  { aspect: 'Abstrak',               score: 82, feedback: 'Abstrak sudah merangkum penelitian dengan baik. Tambahkan temuan utama secara lebih spesifik.' },
+  { aspect: 'Latar Belakang',        score: 78, feedback: 'Relevansi masalah sudah kuat. Pastikan gap penelitian dipertegas dengan data terkini.' },
+  { aspect: 'Rumusan Masalah',       score: 75, feedback: 'Rumusan cukup spesifik namun kurang terukur. Tambahkan indikator keberhasilan yang jelas.' },
+  { aspect: 'Tujuan Penelitian',     score: 82, feedback: 'Tujuan sudah SMART dan selaras dengan rumusan masalah. Deliverable output perlu dipertegas.' },
+  { aspect: 'Metode Penelitian',     score: 68, feedback: 'Perlu justifikasi lebih kuat mengapa metode ini dipilih dibanding alternatif yang ada.' },
+  { aspect: 'Hasil dan Pembahasan',  score: 85, feedback: 'Pembahasan sangat baik — argumentasi data sudah selaras dengan temuan penelitian.' },
+  { aspect: 'Kesimpulan & Saran',    score: 79, feedback: 'Kesimpulan sudah menjawab rumusan masalah. Saran perlu lebih spesifik dan actionable.' },
 ]
 
 const FLOW_STEPS = [
-  { icon: '📤', num: '01', title: 'Upload Dokumen Skripsi', desc: 'Upload file PDF atau PPT skripsimu. Sistem mendukung dokumen hingga 50 halaman dengan ekstraksi teks otomatis dari semua bab.' },
+  { icon: '📤', num: '01', title: 'Upload & Pilih Tipe', desc: 'Upload file PDF skripsimu dan pilih tipe: Seminar Proposal atau Laporan Akhir. Sistem mendukung dokumen PDF hingga 100 halaman.' },
   { icon: '🔬', num: '02', title: 'AI Mengekstrak & Membaca', desc: 'AI membaca seluruh isi dokumen per bab. Setiap paragraf, argumen, data, dan kesimpulan diproses untuk pemahaman menyeluruh.' },
-  { icon: '⚖️', num: '03', title: 'Penilaian per Aspek', desc: 'Setiap dari 5 aspek dinilai secara independen berdasarkan standar yang mencerminkan ekspektasi dosen penguji sesungguhnya.' },
+  { icon: '⚖️', num: '03', title: 'Penilaian per Aspek', desc: 'Setiap aspek dinilai secara independen: 5 aspek untuk Proposal, 7 aspek untuk Laporan Akhir — berbasis standar yang mencerminkan ekspektasi dosen penguji.' },
   { icon: '📊', num: '04', title: 'Skor 0–100 Ditampilkan', desc: 'Setiap aspek mendapat skor numerik 0–100 dengan visualisasi warna — hijau (kuat), kuning (perlu perhatian), merah (lemah).' },
   { icon: '💡', num: '05', title: 'Feedback & Rekomendasi', desc: 'Setiap skor disertai penjelasan spesifik mengapa nilai itu diberikan dan langkah konkret yang bisa kamu ambil untuk memperbaikinya.' },
 ]
 
-const ASPECTS = [
+const PROPOSAL_ASPECTS = [
   {
     icon: '📖',
     title: 'Latar Belakang',
@@ -48,39 +50,126 @@ const ASPECTS = [
     ],
   },
   {
+    icon: '🎯',
+    title: 'Tujuan Penelitian',
+    color: 'bg-sky-50 border-sky-200',
+    labelColor: 'text-sky-700',
+    points: [
+      'Kesesuaian tujuan dengan rumusan masalah',
+      'Kriteria SMART (Specific, Measurable, Achievable, Relevant, Time-bound)',
+      'Kelayakan dalam timeframe yang direncanakan',
+      'Deliverable output yang konkret dan measurable',
+    ],
+  },
+  {
     icon: '🔬',
-    title: 'Metodologi',
+    title: 'Metode Penelitian',
     color: 'bg-blue-50 border-blue-200',
     labelColor: 'text-blue-700',
     points: [
       'Ketepatan pemilihan metode untuk menjawab rumusan masalah',
       'Justifikasi pemilihan metode vs alternatif',
       'Kualitas desain penelitian dan sampling',
-      'Kejelasan prosedur pengumpulan dan analisis data',
+      'Kelayakan (feasibility) eksekusi dalam kondisi nyata',
     ],
   },
   {
-    icon: '📈',
-    title: 'Analisis & Pembahasan',
-    color: 'bg-emerald-50 border-emerald-200',
-    labelColor: 'text-emerald-700',
+    icon: '📚',
+    title: 'Daftar Pustaka',
+    color: 'bg-rose-50 border-rose-200',
+    labelColor: 'text-rose-700',
     points: [
-      'Kedalaman analisis terhadap data yang dikumpulkan',
-      'Konsistensi temuan dengan metodologi yang digunakan',
-      'Kemampuan menjelaskan temuan anomali',
-      'Hubungan hasil dengan teori dan penelitian sebelumnya',
+      'Jumlah dan kualitas sumber (minimal 15–20 untuk S1)',
+      'Relevansi langsung dengan topik penelitian',
+      'Kemutakhiran referensi (70–80% dari 5–10 tahun terakhir)',
+      'Konsistensi format sitasi (APA, Harvard, dll.)',
+    ],
+  },
+]
+
+const LAPORAN_ASPECTS = [
+  {
+    icon: '📝',
+    title: 'Abstrak',
+    color: 'bg-slate-50 border-slate-200',
+    labelColor: 'text-slate-700',
+    points: [
+      'Kelengkapan konten: background, metode, hasil, kesimpulan',
+      'Panjang ideal 150–250 kata, padat dan informatif',
+      'Bahasa ilmiah dan dapat dipahami tanpa membaca full text',
+      'Menonjolkan kontribusi dan temuan utama penelitian',
+    ],
+  },
+  {
+    icon: '📖',
+    title: 'Latar Belakang',
+    color: 'bg-indigo-50 border-indigo-200',
+    labelColor: 'text-indigo-700',
+    points: [
+      'Konteks penelitian yang kuat dan relevan',
+      'Gap penelitian teridentifikasi dengan jelas',
+      'Dukungan data dan fakta terkini',
+      'Alur logis dari masalah umum ke masalah spesifik',
+    ],
+  },
+  {
+    icon: '❓',
+    title: 'Rumusan Masalah',
+    color: 'bg-purple-50 border-purple-200',
+    labelColor: 'text-purple-700',
+    points: [
+      'Spesifisitas dan keterukuran setiap pertanyaan penelitian',
+      'Konsistensi dengan latar belakang yang dijelaskan',
+      'Jumlah pertanyaan proporsional (2–4 untuk S1)',
+      'Formulasi yang tepat dan dapat diverifikasi',
     ],
   },
   {
     icon: '🎯',
-    title: 'Kesimpulan & Saran',
+    title: 'Tujuan Penelitian',
+    color: 'bg-sky-50 border-sky-200',
+    labelColor: 'text-sky-700',
+    points: [
+      'Kesesuaian tujuan dengan rumusan masalah',
+      'Kriteria SMART dan kelayakan dalam timeframe',
+      'Deliverable output yang konkret',
+      'Tidak ada scope creep atau overambition',
+    ],
+  },
+  {
+    icon: '🔬',
+    title: 'Metode Penelitian',
+    color: 'bg-blue-50 border-blue-200',
+    labelColor: 'text-blue-700',
+    points: [
+      'Kesesuaian desain penelitian dengan pertanyaan penelitian',
+      'Sampel actual, prosedur pengumpulan data, dan instrumen',
+      'Teknik analisis sesuai dengan jenis data',
+      'Deviasi dari rencana original dijelaskan dan justified',
+    ],
+  },
+  {
+    icon: '📈',
+    title: 'Hasil dan Pembahasan',
+    color: 'bg-emerald-50 border-emerald-200',
+    labelColor: 'text-emerald-700',
+    points: [
+      'Data disajikan secara sistematis per pertanyaan penelitian',
+      'Pembahasan menghubungkan temuan dengan teori dan literatur',
+      'Konsistensi antara RQ, metodologi, dan hasil',
+      'Temuan anomali atau tidak terduga dibahas secara kritis',
+    ],
+  },
+  {
+    icon: '🎯',
+    title: 'Kesimpulan dan Saran',
     color: 'bg-amber-50 border-amber-200',
     labelColor: 'text-amber-700',
     points: [
-      'Keterjawaban semua rumusan masalah',
-      'Kesesuaian kesimpulan dengan temuan penelitian',
-      'Spesifisitas dan relevansi saran yang diberikan',
-      'Kontribusi penelitian terhadap bidang ilmu',
+      'Semua rumusan masalah terjawab dalam kesimpulan',
+      'Kesimpulan berbasis temuan — bukan pengulangan teori',
+      'Saran spesifik, relevan, dan actionable',
+      'Kontribusi penelitian terhadap bidang ilmu disebutkan',
     ],
   },
 ]
@@ -137,7 +226,7 @@ export default function AnalisaPage() {
           </motion.h1>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.18 }} className="text-gray-500 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-            AI menilai skripsimu secara objektif dari 5 aspek utama yang sama dengan kriteria penilaian dosen penguji. 
+            AI menilai skripsimu secara objektif sesuai tipenya — 5 aspek untuk Proposal, 7 aspek untuk Laporan Akhir.
             Skor, feedback spesifik, dan saran perbaikan langsung keluar begitu analisa selesai.
           </motion.p>
 
@@ -152,7 +241,7 @@ export default function AnalisaPage() {
 
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex items-center justify-center gap-8 mt-12 flex-wrap">
             {[
-              { num: '5', label: 'Aspek Penilaian' },
+              { num: '5 / 7', label: 'Aspek Penilaian' },
               { num: '0–100', label: 'Skala Skor' },
               { num: '2–5 mnt', label: 'Waktu Analisa' },
             ].map((s, i) => (
@@ -214,7 +303,7 @@ export default function AnalisaPage() {
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">📊</div>
                     <div>
                       <p className="text-white text-sm font-semibold">Hasil Analisa Skripsi</p>
-                      <p className="text-emerald-200 text-xs">Dinilai AI per aspek</p>
+                      <p className="text-emerald-200 text-xs">Laporan Akhir · Dinilai AI per aspek</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -225,7 +314,7 @@ export default function AnalisaPage() {
                       viewport={{ once: true }}
                       transition={{ delay: 0.5 }}
                     >
-                      78
+                      79
                     </motion.p>
                     <p className="text-emerald-200 text-xs">Overall</p>
                   </div>
@@ -273,7 +362,7 @@ export default function AnalisaPage() {
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <p className="text-xs font-bold text-amber-700 mb-1">💡 Prioritas Perbaikan</p>
                 <p className="text-xs text-amber-600 leading-relaxed">
-                  Fokus pada Metodologi (68) terlebih dahulu — tambahkan komparasi metode dan justifikasi pemilihan. 
+                      Fokus pada Metode Penelitian (68) terlebih dahulu — tambahkan komparasi metode dan justifikasi pemilihan. 
                   Ini kemungkinan menjadi pertanyaan utama dosen penguji.
                 </p>
               </div>
@@ -286,40 +375,78 @@ export default function AnalisaPage() {
         </div>
       </section>
 
-      {/* ── 5 ASPEK DETAIL ───────────────────────────────── */}
+      {/* ── ASPEK DETAIL ────────────────────────────────── */}
       <section className="py-20 px-6 bg-white">
-        <div className="max-w-4xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-3">5 Aspek yang Dinilai</h2>
+        <div className="max-w-5xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Aspek yang Dinilai</h2>
             <p className="text-gray-500 max-w-lg mx-auto">
-              Rubrik penilaian dirancang mengikuti standar akademik umum yang digunakan dosen penguji
+              Rubrik penilaian dirancang mengikuti standar akademik umum untuk Proposal dan Laporan Akhir
             </p>
           </motion.div>
 
-          <div className="space-y-5">
-            {ASPECTS.map((aspect, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.07 }}
-                className={`border rounded-2xl p-6 ${aspect.color}`}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-2xl">{aspect.icon}</span>
-                  <h3 className={`text-base font-bold ${aspect.labelColor}`}>{aspect.title}</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {aspect.points.map((point, j) => (
-                    <div key={j} className="flex items-start gap-2">
-                      <span className="mt-0.5 text-xs">✓</span>
-                      <p className="text-xs text-gray-600 leading-relaxed">{point}</p>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
+          {/* Seminar Proposal (5 aspek) */}
+          <div className="mb-14">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <span className="text-2xl">📝</span> Seminar Proposal (5 Aspek)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {PROPOSAL_ASPECTS.map((aspect, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.07 }}
+                  className={`border rounded-2xl p-5 ${aspect.color}`}
+                >
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-2xl">{aspect.icon}</span>
+                    <h4 className={`text-sm font-bold ${aspect.labelColor}`}>{aspect.title}</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {aspect.points.map((point, j) => (
+                      <div key={j} className="flex items-start gap-2">
+                        <span className="mt-0.5 text-xs">✓</span>
+                        <p className="text-xs text-gray-600 leading-relaxed">{point}</p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Laporan Akhir (7 aspek) */}
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <span className="text-2xl">🎓</span> Laporan Akhir (7 Aspek)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {LAPORAN_ASPECTS.map((aspect, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.07 }}
+                  className={`border rounded-2xl p-5 ${aspect.color}`}
+                >
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-2xl">{aspect.icon}</span>
+                    <h4 className={`text-sm font-bold ${aspect.labelColor}`}>{aspect.title}</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {aspect.points.map((point, j) => (
+                      <div key={j} className="flex items-start gap-2">
+                        <span className="mt-0.5 text-xs">✓</span>
+                        <p className="text-xs text-gray-600 leading-relaxed">{point}</p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

@@ -13,14 +13,32 @@ type Document = {
   parse_status: string
 }
 
+type TypoDetail = {
+  typo: string
+  correction: string
+  page: number
+  line: number
+  context: string
+}
+
+type TypoCheck = {
+  total_typos_detected: number
+  typo_categories: {
+    spelling_errors: number
+    grammatical_errors: number
+    punctuation_errors: number
+  }
+  typos_with_location: TypoDetail[]
+}
+
 type SimilarityCheck = {
   id: string
   document_id: string
   similarity_score: number | null
-  ai_text_percent: number | null
   status: string
   created_at: string
-  chapters?: Array<{ name: string; similarity: number; aiText: number }>
+  chapters?: Array<{ name: string; similarity: number }>
+  typo_check?: TypoCheck | null
 }
 
 function colorFor(val: number, thresholds: [number, number]) {
@@ -56,8 +74,8 @@ function DocumentPicker() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">🔍 Cek Plagiasi</h1>
-        <p className="text-gray-500 mt-1">Pilih dokumen untuk mengecek kemiripan teks dan deteksi konten AI.</p>
+        <h1 className="text-2xl font-bold text-gray-900">🔍 Cek Kesamaan & Typo</h1>
+        <p className="text-gray-500 mt-1">Pilih dokumen untuk mengecek kemiripan teks dan deteksi typo.</p>
       </div>
       {docs.length === 0 ? (
         <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
@@ -147,8 +165,8 @@ function SimilarityContent() {
     <div className="max-w-4xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">🔍 Cek Plagiasi</h1>
-          <p className="text-gray-500 mt-1 text-sm">Estimasi kemiripan teks dan deteksi konten AI</p>
+          <h1 className="text-2xl font-bold text-gray-900">🔍 Cek Kesamaan & Typo</h1>
+          <p className="text-gray-500 mt-1 text-sm">Estimasi kemiripan teks dan deteksi typo</p>
         </div>
         <div className="flex gap-2">
           <Link href="/similarity" className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 px-3 py-2 rounded-lg transition-colors">
@@ -213,12 +231,18 @@ function SimilarityContent() {
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm text-center">
                   <p className={`text-5xl font-bold ${
-                    (selected.ai_text_percent ?? 0) <= 20 ? 'text-emerald-600' :
-                    (selected.ai_text_percent ?? 0) <= 40 ? 'text-amber-500' : 'text-red-500'
+                    !selected.typo_check ? 'text-gray-400' :
+                    selected.typo_check.total_typos_detected === 0 ? 'text-emerald-600' :
+                    selected.typo_check.total_typos_detected <= 10 ? 'text-amber-500' : 'text-red-500'
                   }`}>
-                    {selected.ai_text_percent != null ? `${selected.ai_text_percent}%` : '—'}
+                    {selected.typo_check != null ? selected.typo_check.total_typos_detected : '—'}
                   </p>
-                  <p className="mt-1.5 text-sm text-gray-500">Estimasi Teks AI</p>
+                  <p className="mt-1.5 text-sm text-gray-500">Typo Terdeteksi</p>
+                  {selected.typo_check && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {selected.typo_check.typo_categories.spelling_errors} ejaan · {selected.typo_check.typo_categories.grammatical_errors} tata bahasa · {selected.typo_check.typo_categories.punctuation_errors} tanda baca
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -233,25 +257,49 @@ function SimilarityContent() {
                       <div key={ch.name} className="px-6 py-4">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
                           <span className="text-sm font-medium text-gray-800">{ch.name}</span>
-                          <div className="flex gap-2">
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeFor(ch.similarity, [15, 30])}`}>
-                              {ch.similarity}% mirip
-                            </span>
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeFor(ch.aiText, [20, 40])}`}>
-                              {ch.aiText}% AI
-                            </span>
-                          </div>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeFor(ch.similarity, [15, 30])}`}>
+                            {ch.similarity}% mirip
+                          </span>
                         </div>
-                        <div className="flex gap-2">
-                          <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                            <div className={`h-full rounded-full ${colorFor(ch.similarity, [15, 30])}`} style={{ width: `${ch.similarity}%` }} />
-                          </div>
-                          <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                            <div className={`h-full rounded-full ${colorFor(ch.aiText, [20, 40])}`} style={{ width: `${ch.aiText}%` }} />
-                          </div>
+                        <div className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                          <div className={`h-full rounded-full ${colorFor(ch.similarity, [15, 30])}`} style={{ width: `${ch.similarity}%` }} />
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Typo report */}
+              {selected.typo_check && selected.typo_check.typos_with_location.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h2 className="font-semibold text-gray-900">✏️ Daftar Typo</h2>
+                    <span className="text-xs text-gray-400">{selected.typo_check.total_typos_detected} typo ditemukan</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 text-xs text-gray-500 text-left">
+                          <th className="px-6 py-3 font-medium">Typo</th>
+                          <th className="px-4 py-3 font-medium">Koreksi</th>
+                          <th className="px-4 py-3 font-medium">Hal.</th>
+                          <th className="px-4 py-3 font-medium">Baris</th>
+                          <th className="px-4 py-3 font-medium">Konteks</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {selected.typo_check.typos_with_location.map((t, i) => (
+                          <tr key={i} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-3 font-medium text-red-600">{t.typo}</td>
+                            <td className="px-4 py-3 text-emerald-700">{t.correction}</td>
+                            <td className="px-4 py-3 text-gray-500">{t.page}</td>
+                            <td className="px-4 py-3 text-gray-500">{t.line}</td>
+                            <td className="px-4 py-3 text-gray-400 text-xs max-w-xs truncate">{t.context}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
@@ -263,7 +311,7 @@ function SimilarityContent() {
               )}
 
               <p className="text-xs text-gray-400 text-center">
-                ⚠️ Hasil merupakan estimasi. Bukan setara dengan Turnitin atau alat deteksi AI profesional.
+                ⚠️ Hasil merupakan estimasi internal. Bukan setara dengan Turnitin atau alat plagiasi profesional.
               </p>
             </>
           )}

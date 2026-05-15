@@ -7,19 +7,19 @@ import Link from 'next/link'
 /* ─── DATA ──────────────────────────────────────────────── */
 
 const CHAPTERS = [
-  { chapter: 'BAB I – Pendahuluan',         similarity: 12, ai: 15, risk: 'low' },
-  { chapter: 'BAB II – Tinjauan Pustaka',   similarity: 28, ai: 35, risk: 'medium' },
-  { chapter: 'BAB III – Metodologi',        similarity: 10, ai: 18, risk: 'low' },
-  { chapter: 'BAB IV – Hasil & Pembahasan', similarity: 14, ai: 20, risk: 'low' },
-  { chapter: 'BAB V – Kesimpulan',          similarity:  8, ai: 12, risk: 'low' },
+  { chapter: 'BAB I – Pendahuluan',         similarity: 12, typos: 3,  risk: 'low' },
+  { chapter: 'BAB II – Tinjauan Pustaka',   similarity: 28, typos: 7,  risk: 'medium' },
+  { chapter: 'BAB III – Metodologi',        similarity: 10, typos: 2,  risk: 'low' },
+  { chapter: 'BAB IV – Hasil & Pembahasan', similarity: 14, typos: 5,  risk: 'low' },
+  { chapter: 'BAB V – Kesimpulan',          similarity:  8, typos: 1,  risk: 'low' },
 ]
 
 const FLOW_STEPS = [
-  { icon: '📤', num: '01', title: 'Upload Dokumen Skripsi', desc: 'Upload file PDF atau PPT skripsimu. Sistem akan mengekstrak teks dari setiap bab secara otomatis.' },
-  { icon: '🔢', num: '02', title: 'Segmentasi per Bab', desc: 'Teks dibagi per bab berdasarkan struktur dokumen. Ini memungkinkan analisa yang lebih granular dan akurat.' },
-  { icon: '📐', num: '03', title: 'Cek Kemiripan Teks', desc: 'Setiap segmen diubah menjadi vektor menggunakan model embedding. Kemiripan dihitung berdasarkan kedekatan antar vektor.' },
-  { icon: '🤖', num: '04', title: 'Deteksi Konten AI', desc: 'Model deteksi mengidentifikasi pola kalimat yang sering muncul pada teks yang ditulis oleh AI seperti ChatGPT.' },
-  { icon: '📋', num: '05', title: 'Laporan Per Bab', desc: 'Hasil kemiripan dan estimasi AI ditampilkan per bab dengan visualisasi bar warna dan badge status — sekilas langsung paham.' },
+  { icon: '📤', num: '01', title: 'Upload Laporan Akhir', desc: 'Upload file PDF Laporan Akhirmu. Sistem mengekstrak teks dari setiap bab dan halaman secara otomatis.' },
+  { icon: '🔢', num: '02', title: 'Segmentasi per Bab', desc: 'Teks dibagi per bab berdasarkan struktur dokumen untuk analisa yang lebih granular dan akurat.' },
+  { icon: '📐', num: '03', title: 'Cek Kemiripan Teks', desc: 'Setiap segmen diubah menjadi vektor menggunakan model embedding. Kemiripan dihitung berdasarkan kedekatan antar vektor dengan dokumen lain di sistem.' },
+  { icon: '✏️', num: '04', title: 'Deteksi Typo', desc: 'AI membaca teks per halaman dan mengidentifikasi salah ejaan, kesalahan tata bahasa minor, dan punctuation. Setiap typo dilengkapi lokasi halaman dan baris.' },
+  { icon: '📋', num: '05', title: 'Laporan Lengkap', desc: 'Hasil kemiripan per bab + daftar typo dengan halaman, baris, dan konteks kalimat — sekilas langsung paham apa yang perlu diperbaiki.' },
 ]
 
 const RISK_GUIDE = [
@@ -29,10 +29,10 @@ const RISK_GUIDE = [
 ]
 
 const FAQ = [
-  { q: 'Apakah ini sama dengan Turnitin?', a: 'Tidak. TemanSkripsi menggunakan vector similarity berbasis embedding AI, bukan database dokumen publik yang Turnitin gunakan. Hasil ini adalah estimasi untuk deteksi dini — bukan pengganti Turnitin resmi.' },
-  { q: 'Seberapa akurat deteksi teks AI?', a: 'Model deteksi AI memiliki margin kesalahan seperti semua alat sejenisnya. Kalimat yang sangat terstruktur (seperti abstrak akademik) bisa terflag meski ditulis manusia. Gunakan sebagai panduan, bukan vonis.' },
+  { q: 'Apakah ini sama dengan Turnitin?', a: 'Tidak. TemanSkripsi menggunakan vector similarity berbasis embedding AI untuk membandingkan dokumenmu dengan koleksi di sistem kami — bukan database dokumen publik. Hasil ini adalah estimasi untuk deteksi dini secara internal, bukan pengganti Turnitin resmi.' },
+  { q: 'Bagaimana cara kerja deteksi typo?', a: 'AI membaca teks laporan akhirmu halaman per halaman dan mengidentifikasi tiga kategori: salah ejaan (spelling errors), kesalahan tata bahasa minor, dan punctuation yang tidak tepat. Setiap typo yang ditemukan dilengkapi nomor halaman, nomor baris, dan potongan kalimat sebagai konteks.' },
   { q: 'BAB II sering punya persentase tinggi — kenapa?', a: 'Tinjauan Pustaka secara alami mengandung banyak kutipan, parafrase, dan terminologi akademik yang mirip antar dokumen. Wajar jika BAB II memiliki kemiripan lebih tinggi dari bab lain.' },
-  { q: 'Apakah hasil bisa digunakan sebagai bukti resmi?', a: 'Tidak. Hasil analisa TemanSkripsi hanya untuk deteksi dini personal. Untuk keperluan resmi, gunakan alat yang telah mendapat pengakuan institusi seperti Turnitin atau iThenticate.' },
+  { q: 'Seberapa akurat deteksi typo?', a: 'Deteksi typo dilakukan oleh LLM yang sangat baik dalam memahami konteks bahasa. Namun tetap ada margin kesalahan — nama orang atau istilah teknis bisa terflag. Gunakan daftar typo sebagai panduan awal dan verifikasi secara manual.' },
 ]
 
 /* ─── ANIMATED BAR ───────────────────────────────────────── */
@@ -67,18 +67,18 @@ export default function PlagiasiPage() {
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <span className="inline-flex items-center gap-2 bg-amber-100 border border-amber-200 text-amber-700 text-xs font-bold px-4 py-1.5 rounded-full mb-6">
-              🔍 Cek Kesamaan & Deteksi AI
+              🔍 Cek Kesamaan & Typo
             </span>
           </motion.div>
 
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-5 leading-tight">
-            Pastikan Keaslian<br />
-            <span className="text-amber-500">Skripsimu Sebelum Hari Sidang</span>
+            Kemiripan Teks + Deteksi Typo<br />
+            <span className="text-amber-500">Sebelum Laporan Akhir Dikumpulkan</span>
           </motion.h1>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.18 }} className="text-gray-500 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-            Estimasi kemiripan teks dan deteksi konten AI ditampilkan per bab, sehingga kamu dapat mengetahui
-            bagian yang perlu mendapat perhatian lebih sebelum memasuki ruang sidang.
+            Periksa estimasi kemiripan teks per bab dan temukan typo otomatis — lengkap dengan lokasi
+            halaman dan baris agar mudah diperbaiki sebelum pengumpulan.
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -93,13 +93,13 @@ export default function PlagiasiPage() {
           {/* Disclaimer banner */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-8 inline-flex items-center gap-2 bg-white border border-amber-200 text-amber-700 text-xs px-4 py-2.5 rounded-full shadow-sm">
             <span>⚠️</span>
-            <span>Estimasi untuk deteksi dini — bukan pengganti Turnitin atau alat deteksi AI profesional</span>
+            <span>Cek internal saja — bukan pengganti Turnitin. Deteksi typo dilengkapi lokasi halaman dan baris.</span>
           </motion.div>
 
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex items-center justify-center gap-8 mt-10 flex-wrap">
             {[
-              { num: 'Per Bab', label: 'Laporan Detail' },
-              { num: '2 Metrik', label: 'Kemiripan & AI' },
+              { num: 'Per Bab', label: 'Laporan Kemiripan' },
+              { num: 'Halaman + Baris', label: 'Lokasi Typo' },
               { num: '<3 mnt', label: 'Waktu Proses' },
             ].map((s, i) => (
               <div key={i} className="text-center">
@@ -115,7 +115,7 @@ export default function PlagiasiPage() {
       <section id="alur" className="py-20 px-6 bg-white">
         <div className="max-w-4xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Alur Cek Kesamaan & AI</h2>
+                <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Alur Cek Kesamaan & Typo</h2>
             <p className="text-gray-500 max-w-lg mx-auto">Dari upload hingga laporan — 5 langkah yang terjadi otomatis</p>
           </motion.div>
 
@@ -158,7 +158,7 @@ export default function PlagiasiPage() {
                 <div className="bg-amber-500 px-5 py-4 flex items-center gap-3">
                   <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-lg">🔍</div>
                   <div>
-                    <p className="text-white text-sm font-semibold">Laporan Kesamaan & AI</p>
+                    <p className="text-white text-sm font-semibold">Laporan Kesamaan & Typo</p>
                     <p className="text-amber-100 text-xs">Skripsi: Analisis Sentimen ML · Per bab</p>
                   </div>
                 </div>
@@ -186,10 +186,10 @@ export default function PlagiasiPage() {
                       viewport={{ once: true }}
                       transition={{ delay: 0.3, type: 'spring' }}
                     >
-                      22%
+                      18
                     </motion.p>
-                    <p className="text-xs text-gray-500 mt-1">Estimasi Teks AI</p>
-                    <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full mt-2 inline-block">⚠ Perhatikan</span>
+                    <p className="text-xs text-gray-500 mt-1">Typo Ditemukan</p>
+                    <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full mt-2 inline-block">⚠ Periksa</span>
                   </div>
                 </div>
 
@@ -198,7 +198,7 @@ export default function PlagiasiPage() {
                   <div className="flex gap-8 text-[10px] text-gray-400 font-semibold mb-1">
                     <span className="flex-1">BAB</span>
                     <span className="w-20 text-center">Kemiripan</span>
-                    <span className="w-20 text-center">Teks AI</span>
+                    <span className="w-20 text-center">Typo</span>
                   </div>
                   {CHAPTERS.map((ch, i) => (
                     <div key={i}>
@@ -208,22 +208,19 @@ export default function PlagiasiPage() {
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.similarity <= 15 ? 'text-emerald-700 bg-emerald-50' : ch.similarity <= 30 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>
                             {ch.similarity}%
                           </span>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.ai <= 20 ? 'text-emerald-700 bg-emerald-50' : ch.ai <= 40 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>
-                            {ch.ai}%
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.typos === 0 ? 'text-emerald-700 bg-emerald-50' : ch.typos <= 5 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>
+                            {ch.typos} typo
                           </span>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <AnimatedBar value={ch.similarity} color={ch.similarity <= 15 ? 'bg-emerald-500' : ch.similarity <= 30 ? 'bg-amber-400' : 'bg-red-500'} delay={i * 0.08} />
-                        <AnimatedBar value={ch.ai} color={ch.ai <= 20 ? 'bg-emerald-500' : ch.ai <= 40 ? 'bg-amber-400' : 'bg-red-500'} delay={i * 0.08 + 0.05} />
-                      </div>
+                      <AnimatedBar value={ch.similarity} color={ch.similarity <= 15 ? 'bg-emerald-500' : ch.similarity <= 30 ? 'bg-amber-400' : 'bg-red-500'} delay={i * 0.08} />
                     </div>
                   ))}
                 </div>
 
                 <div className="px-5 py-3 border-t border-gray-100 flex items-center gap-4 text-[10px] text-gray-400">
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-1 rounded bg-gray-400 inline-block" /> Bar kiri = Kemiripan</span>
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-1 rounded bg-gray-300 inline-block" /> Bar kanan = Teks AI</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-1 rounded bg-emerald-400 inline-block" /> Bar = Kemiripan per bab</span>
+                  <span className="flex items-center gap-1">✏️ Badge typo warna merah = perlu perhatian</span>
                 </div>
               </div>
               <p className="text-[11px] text-gray-400 text-center mt-3">* Demo contoh — laporan aktual berbasis dokumen skripsimu</p>
@@ -233,8 +230,8 @@ export default function PlagiasiPage() {
             <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="space-y-5">
               <h3 className="text-xl font-bold text-gray-900">Cara Membaca Laporan</h3>
               <p className="text-sm text-gray-500 leading-relaxed">
-                Setiap bab memiliki dua bar: satu untuk estimasi kemiripan teks (kiri), satu untuk estimasi konten AI (kanan). 
-                Warna bar mencerminkan tingkat risiko.
+                Setiap bab menampilkan bar kemiripan teks dan badge jumlah typo.
+                Warna bar dan badge mencerminkan tingkat perhatian yang dibutuhkan.
               </p>
 
               {/* Risk guide */}
@@ -261,8 +258,8 @@ export default function PlagiasiPage() {
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <p className="text-xs font-bold text-amber-700 mb-1">⚡ Fokus Perhatian</p>
                 <p className="text-xs text-amber-600 leading-relaxed">
-                  Pada contoh di atas, BAB II perlu perhatian lebih karena kemiripan 28% dan teks AI 35% — 
-                  keduanya masuk zona kuning. Prioritaskan revisi parafrase dan tambahkan analisis orisinal di tinjauan pustaka.
+                  Pada contoh di atas, BAB II perlu perhatian lebih karena kemiripan 28% (zona kuning) dan 7 typo ditemukan.
+                  Prioritaskan revisi parafrase dan perbaiki typo sebelum pengumpulan.
                 </p>
               </div>
             </motion.div>
@@ -348,7 +345,7 @@ export default function PlagiasiPage() {
             </Link>
           </div>
           <p className="text-amber-200 text-xs mt-6">
-            ⚠️ Hasil merupakan estimasi — bukan pengganti Turnitin atau alat deteksi AI profesional
+            ⚠️ Cek internal saja — bukan pengganti Turnitin. Typo detection berbantuan AI.
           </p>
         </motion.div>
       </section>

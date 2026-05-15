@@ -17,6 +17,7 @@ Business logic lives in:
 import logging
 from contextlib import asynccontextmanager
 from typing import Optional
+from uuid import uuid4
 
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
@@ -132,33 +133,60 @@ def parse_document(req: ParseRequest, bg: BackgroundTasks):
 @app.post("/documents/analyze", response_model=AnalysisResponse, tags=["Analysis"])
 async def analyze_document(
     file: UploadFile = File(..., description="File PDF atau PPTX skripsi"),
-    major: str = Form(..., description="Faculty slug: pendidikan | hukum | bisnis | teknologi | humaniora | kesehatan"),
-    jurusan: str = Form(..., description="Program slug, e.g. pendidikan-matematika, hukum-pidana, teknik-informatika"),
+    faculty: str = Form(..., description="Faculty slug: pendidikan | hukum | bisnis | teknologi | humaniora | kesehatan"),
+    program: str = Form(..., description="Program slug, e.g. pendidikan-matematika, hukum-pidana, teknik-informatika"),
     judul_skripsi: str = Form(..., description="Judul lengkap skripsi"),
-    analysis_id: Optional[str] = Form(None, description="(Opsional) UUID analyses record — jika diisi, hasil disimpan ke database"),
+    analysis_id: Optional[str] = Form(None, description="(Opsional) UUID analyses record — jika kosong dan save=true, UUID otomatis di-generate"),
+    document_id: Optional[str] = Form(None, description="(Opsional) UUID dokumen — diperlukan jika save=true tanpa analysis_id"),
+    user_id: Optional[str] = Form(None, description="(Opsional) UUID user — diperlukan jika save=true tanpa analysis_id"),
+    save: bool = Form(True, description="Jika False, hasil tidak disimpan ke database (mode RnD/testing)"),
 ):
     """
-    Analisis skripsi per BAB menggunakan LangChain + Gemini.
+    Analisis skripsi per **aspek** menggunakan LangChain + Gemini.
 
     Upload langsung file PDF/PPTX — tidak perlu parse terpisah.
-    Jika `analysis_id` diisi, hasil analisis otomatis disimpan ke database.
+    Gunakan `save=false` untuk mode RnD/testing tanpa menyimpan ke database.
 
-    **Output per bab**: `bab`, `skor` (0–100), `analisa`, `saran`
+    **5 Aspek**: Latar Belakang | Rumusan Masalah | Metodologi | Analisis & Pembahasan | Kesimpulan & Saran
+
+    **Output per aspek**: `aspek` (kode DB), `label`, `skor` (0–100), `analisa`, `saran`
     """
     file_type = (file.filename or "").rsplit(".", 1)[-1].lower()
     if file_type not in ("pdf", "pptx"):
         raise HTTPException(status_code=400, detail="File harus berformat PDF atau PPTX")
 
     try:
+        # Resolve analysis_id jika save=True
+        if save and not (analysis_id and analysis_id.strip()):
+            if document_id and user_id:
+                # Create analyses record dengan relasi lengkap
+                analysis_id = str(uuid4())
+                get_supabase().table("analyses").insert(
+                    {
+                        "id":          analysis_id,
+                        "document_id": document_id,
+                        "user_id":     user_id,
+                        "status":      "processing",
+                    }
+                ).execute()
+                log.info("Created analyses record: %s (doc=%s)", analysis_id, document_id)
+            else:
+                # Tidak ada relasi lengkap — switch ke mode no-save, beri warning
+                log.warning(
+                    "save=true tapi document_id/user_id tidak diberikan — hasil tidak disimpan ke DB. "
+                    "Gunakan save=false untuk testing atau berikan document_id+user_id."
+                )
+                save = False
+
         raw = await file.read()
         text = extract_text(raw, file_type)
         agent = AnalisisAgent(get_supabase(), get_llm(), get_embeddings())
         return agent.run_from_text(
             text=text,
-            major=major,
-            jurusan=jurusan,
+            major=faculty,
+            jurusan=program,
             judul_skripsi=judul_skripsi,
-            analysis_id=analysis_id,
+            analysis_id=analysis_id if save else None,
         )
     except Exception as exc:
         log.error("Analysis failed: %s", exc, exc_info=True)
