@@ -11,7 +11,7 @@ from schemas.common import DocumentContext
 class ParseRequest(BaseModel):
     document_id: str
     file_path: str    # path inside Supabase Storage "documents" bucket
-    file_type: str    # "pdf" | "pptx"
+    file_type: str    # "pdf"
 
 
 class AnalysisRequest(BaseModel):

@@ -132,10 +132,11 @@ def parse_document(req: ParseRequest, bg: BackgroundTasks):
 
 @app.post("/documents/analyze", response_model=AnalysisResponse, tags=["Analysis"])
 async def analyze_document(
-    file: UploadFile = File(..., description="File PDF atau PPTX skripsi"),
+    file: UploadFile = File(..., description="File PDF skripsi (maks 20MB)"),
     faculty: str = Form(..., description="Faculty slug: pendidikan | hukum | bisnis | teknologi | humaniora | kesehatan"),
     program: str = Form(..., description="Program slug, e.g. pendidikan-matematika, hukum-pidana, teknik-informatika"),
     judul_skripsi: str = Form(..., description="Judul lengkap skripsi"),
+    document_type: str = Form(..., description="Tipe dokumen: proposal | final_report"),
     analysis_id: Optional[str] = Form(None, description="(Opsional) UUID analyses record — jika kosong dan save=true, UUID otomatis di-generate"),
     document_id: Optional[str] = Form(None, description="(Opsional) UUID dokumen — diperlukan jika save=true tanpa analysis_id"),
     user_id: Optional[str] = Form(None, description="(Opsional) UUID user — diperlukan jika save=true tanpa analysis_id"),
@@ -144,16 +145,23 @@ async def analyze_document(
     """
     Analisis skripsi per **aspek** menggunakan LangChain + Gemini.
 
-    Upload langsung file PDF/PPTX — tidak perlu parse terpisah.
-    Gunakan `save=false` untuk mode RnD/testing tanpa menyimpan ke database.
+    Upload langsung file PDF — tidak perlu parse terpisah. Hanya mendukung format **PDF**.
 
-    **5 Aspek**: Latar Belakang | Rumusan Masalah | Metodologi | Analisis & Pembahasan | Kesimpulan & Saran
+    **document_type** menentukan aspek penilaian dan persona dosen penguji:
+    - `proposal` → **5 Aspek**: Latar Belakang | Rumusan Masalah | Tujuan | Metode Penelitian | Daftar Pustaka
+    - `final_report` → **7 Aspek**: Abstrak | Latar Belakang | Rumusan Masalah | Tujuan | Metode | Hasil & Pembahasan | Kesimpulan
 
     **Output per aspek**: `aspek` (kode DB), `label`, `skor` (0–100), `analisa`, `saran`
     """
-    file_type = (file.filename or "").rsplit(".", 1)[-1].lower()
-    if file_type not in ("pdf", "pptx"):
-        raise HTTPException(status_code=400, detail="File harus berformat PDF atau PPTX")
+    if document_type not in ("proposal", "final_report"):
+        raise HTTPException(
+            status_code=400,
+            detail="document_type harus 'proposal' atau 'final_report'",
+        )
+
+    file_ext = (file.filename or "").rsplit(".", 1)[-1].lower()
+    if file_ext != "pdf":
+        raise HTTPException(status_code=400, detail="File harus berformat PDF")
 
     try:
         # Resolve analysis_id jika save=True
@@ -163,13 +171,14 @@ async def analyze_document(
                 analysis_id = str(uuid4())
                 get_supabase().table("analyses").insert(
                     {
-                        "id":          analysis_id,
-                        "document_id": document_id,
-                        "user_id":     user_id,
-                        "status":      "processing",
+                        "id":            analysis_id,
+                        "document_id":   document_id,
+                        "user_id":       user_id,
+                        "document_type": document_type,
+                        "status":        "processing",
                     }
                 ).execute()
-                log.info("Created analyses record: %s (doc=%s)", analysis_id, document_id)
+                log.info("Created analyses record: %s (doc=%s, type=%s)", analysis_id, document_id, document_type)
             else:
                 # Tidak ada relasi lengkap — switch ke mode no-save, beri warning
                 log.warning(
@@ -179,13 +188,14 @@ async def analyze_document(
                 save = False
 
         raw = await file.read()
-        text = extract_text(raw, file_type)
+        text = extract_text(raw, "pdf")
         agent = AnalisisAgent(get_supabase(), get_llm(), get_embeddings())
         return agent.run_from_text(
             text=text,
             major=faculty,
             jurusan=program,
             judul_skripsi=judul_skripsi,
+            document_type=document_type,
             analysis_id=analysis_id if save else None,
         )
     except Exception as exc:

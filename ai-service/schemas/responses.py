@@ -19,9 +19,11 @@ class AspectAnalysis(BaseModel):
 
 
 class AnalysisResponse(BaseModel):
+    document_type: str                          # "proposal" | "final_report"
     overall_score: float
     summary: str
     aspects: list[AspectAnalysis]
+    potential_questions: list[str] = []         # Laporan Akhir only (3–5 questions)
 
 
 # ─────────────────────────────────────────────

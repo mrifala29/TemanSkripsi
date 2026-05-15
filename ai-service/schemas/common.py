@@ -12,9 +12,14 @@ class DocumentContext(BaseModel):
 
     `major` and `jurusan` map directly to the prompt directory structure:
       prompts/fakultas/{major}/{jurusan}.md
+
+    `document_type` determines evaluation aspects and examiner persona:
+      "proposal"     → 5 aspects, advisory persona (Sempro)
+      "final_report" → 7 aspects, critical persona (Sidang)
     """
 
-    document_id: str
-    major: str          # folder slug, e.g. "pendidikan", "hukum", "bisnis", "teknologi"
-    jurusan: str        # file slug, e.g. "pendidikan-matematika", "hukum-pidana"
+    document_id:   str
+    major:         str  # folder slug, e.g. "pendidikan", "hukum", "bisnis", "teknologi"
+    jurusan:       str  # file slug, e.g. "pendidikan-matematika", "hukum-pidana"
     judul_skripsi: str  # full thesis title — used as RAG query & injected into prompts
+    document_type: str  # "proposal" | "final_report"

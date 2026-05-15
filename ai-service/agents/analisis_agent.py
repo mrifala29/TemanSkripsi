@@ -67,6 +67,7 @@ class AnalisisAgent:
             major=ctx.major,
             jurusan=ctx.jurusan,
             judul_skripsi=ctx.judul_skripsi,
+            document_type=ctx.document_type,
             chunks_context=chunks_to_context(chunks),
         )
 
@@ -80,6 +81,7 @@ class AnalisisAgent:
         major: str,
         jurusan: str,
         judul_skripsi: str,
+        document_type: str,
         analysis_id: Optional[str] = None,
         document_id: Optional[str] = None,
         user_id: Optional[str] = None,
@@ -100,6 +102,7 @@ class AnalisisAgent:
             major=major,
             jurusan=jurusan,
             judul_skripsi=judul_skripsi,
+            document_type=document_type,
             chunks_context=chunks_context,
         )
 
@@ -117,6 +120,7 @@ class AnalisisAgent:
         major: str,
         jurusan: str,
         judul_skripsi: str,
+        document_type: str,
         chunks_context: str,
     ) -> AnalysisResponse:
         """Build prompt, call LLM, parse output into AnalysisResponse."""
@@ -126,8 +130,10 @@ class AnalisisAgent:
             jurusan=jurusan,
             variables={
                 "judul_skripsi":  judul_skripsi,
+                "document_type":  document_type,
                 "chunks_context": chunks_context,
             },
+            document_type=document_type,
         )
 
         data: dict = self.chain.invoke([HumanMessage(content=prompt)])
@@ -144,9 +150,11 @@ class AnalisisAgent:
         ]
 
         return AnalysisResponse(
+            document_type=data.get("document_type", document_type),
             overall_score=float(data.get("overall", 0)),
             summary=data.get("summary", ""),
             aspects=aspects,
+            potential_questions=data.get("potential_questions", []),
         )
 
     def _save(self, analysis_id: str, result: AnalysisResponse) -> None:
@@ -166,11 +174,15 @@ class AnalisisAgent:
 
         self.supabase.table("analyses").update(
             {
-                "overall_score": result.overall_score,
-                "summary":       result.summary,
-                "status":        "done",
+                "overall_score":  result.overall_score,
+                "summary":        result.summary,
+                "document_type":  result.document_type,
+                "status":         "done",
             }
         ).eq("id", analysis_id).execute()
 
-        log.info("Analysis %s saved (overall=%.1f)", analysis_id, result.overall_score)
+        log.info(
+            "Analysis %s saved (type=%s, overall=%.1f)",
+            analysis_id, result.document_type, result.overall_score,
+        )
 
