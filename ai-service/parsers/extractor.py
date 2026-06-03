@@ -50,6 +50,20 @@ def extract_text(data: bytes, file_type: str) -> str:
 # ──────────────────────────────────────────────────────────────────────────
 
 
+def extract_pages_from_pdf(data: bytes) -> list[str]:
+    """
+    Extract text per page from a PDF binary.
+
+    Returns:
+        List of strings, one per page (1-indexed by position).
+        Empty pages are kept as empty strings to preserve page numbering.
+
+    Used by KesamaanAgent for page-accurate typo detection.
+    """
+    doc = fitz.open(stream=data, filetype="pdf")
+    return [page.get_text() for page in doc]
+
+
 def _from_pdf(data: bytes) -> str:
     doc = fitz.open(stream=data, filetype="pdf")
     return "\n\n".join(page.get_text() for page in doc)

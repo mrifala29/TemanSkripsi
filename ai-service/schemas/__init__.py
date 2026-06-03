@@ -16,6 +16,9 @@ from schemas.responses import (
     SimulationMessageResponse,
     SimulationStartResponse,
     SimilarityResponse,
+    TypoItem,
+    TypoCategories,
+    TypoCheckResult,
 )
 
 __all__ = [
@@ -34,4 +37,7 @@ __all__ = [
     "SimulationMessageResponse",
     "SimilarChunkItem",
     "SimilarityResponse",
+    "TypoItem",
+    "TypoCategories",
+    "TypoCheckResult",
 ]

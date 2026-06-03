@@ -39,6 +39,7 @@ from schemas import (
     SimulationStartRequest,
     SimulationStartResponse,
 )
+from schemas.common import DocumentContext
 
 load_dotenv()
 
@@ -249,23 +250,112 @@ def session_message(req: SimulationMessageRequest):
 
 
 @app.post("/documents/similarity", response_model=SimilarityResponse, tags=["Similarity"])
-def check_similarity(req: SimilarityRequest):
+async def check_similarity(
+    file: UploadFile = File(..., description="File PDF skripsi (maks 20MB)"),
+    faculty: str = Form(..., description="Faculty slug: pendidikan | hukum | bisnis | teknologi | humaniora | kesehatan"),
+    program: str = Form(..., description="Program slug, e.g. pendidikan-matematika, hukum-pidana, teknik-informatika"),
+    judul_skripsi: str = Form(..., description="Judul lengkap skripsi"),
+    document_type: str = Form(..., description="Tipe dokumen: proposal | final_report"),
+):
     """
-    Check internal document similarity via pgvector cosine similarity.
+    Periksa kemiripan dokumen secara internal via **pgvector cosine similarity**
+    + deteksi typo berbasis LLM (khusus Laporan Akhir).
 
-    **Internal check only** — not a replacement for Turnitin.
+    **Upload file PDF langsung** — tidak perlu pre-processing.
 
-    - **context.document_id**: Target document UUID
-    - **similarity_check_id**: Pre-created `similarity_checks` record UUID
+    ---
 
-    Returns overall similarity percentage and top matching chunks.
+    ### Similarity Check (semua tipe dokumen)
+    - Membandingkan setiap chunk dokumen target dengan chunk dari dokumen lain di sistem
+    - Threshold cosine similarity: **0.70**
+    - Mengembalikan persentase kemiripan overall + top-10 matching chunks
+
+    ### Typo Detection (Laporan Akhir saja)
+    - Hanya berjalan jika `document_type == "final_report"`
+    - LLM membaca teks skripsi halaman per halaman dan mengidentifikasi:
+      - **spelling** — salah ejaan (contoh: "metodelogi" → "metodologi")
+      - **grammatical** — kesalahan tata bahasa
+      - **punctuation** — kesalahan tanda baca
+    - Setiap typo mencantumkan `page`, `line`, dan `context` untuk lokasi tepat
+
+    ---
+
+    **Input**:
+    - `file`: File PDF skripsi (upload langsung)
+    - `faculty`: Slug fakultas (pendidikan | hukum | bisnis | teknologi | humaniora | kesehatan)
+    - `program`: Slug jurusan (pendidikan-matematika, hukum-pidana, teknik-informatika, dll)
+    - `judul_skripsi`: Judul lengkap skripsi
+    - `document_type`: "proposal" atau "final_report"
+
+    **Output**:
+    - `overall_similarity`: Persentase kemiripan (0–100)
+    - `similar_chunks`: Top-10 chunk paling mirip dengan preview dan similarity score
+    - `typo_check`: Hasil deteksi typo per halaman (null untuk Proposal)
+
+    **Catatan**: 
+    - Internal check only — bukan pengganti Turnitin
+    - Hasil tidak disimpan ke database (temporary chunks akan dihapus)
     """
+    if document_type not in ("proposal", "final_report"):
+        raise HTTPException(
+            status_code=400,
+            detail="document_type harus 'proposal' atau 'final_report'",
+        )
+
+    file_ext = (file.filename or "").rsplit(".", 1)[-1].lower()
+    if file_ext != "pdf":
+        raise HTTPException(status_code=400, detail="File harus berformat PDF")
+
+    temp_doc_id = None
     try:
-        agent = KesamaanAgent(get_supabase(), get_embeddings())
-        return agent.run(req)
+        # Generate temporary document_id
+        temp_doc_id = f"test_{uuid4()}"
+        
+        # Extract text from uploaded file
+        raw = await file.read()
+        text = extract_text(raw, "pdf")
+        chunks = chunk_text(text)
+        
+        if not chunks:
+            raise ValueError("File PDF tidak menghasilkan chunks (mungkin file kosong atau corrupted)")
+        
+        # Embed and store chunks temporarily
+        supabase = get_supabase()
+        embeddings = get_embeddings()
+        embed_and_store(supabase, embeddings, temp_doc_id, chunks)
+        
+        log.info("Document embedded for similarity check: %s (%d chunks)", temp_doc_id, len(chunks))
+        
+        # Run similarity check via KesamaanAgent
+        agent = KesamaanAgent(supabase, embeddings, get_llm())
+        req = SimilarityRequest(
+            context=DocumentContext(
+                document_id=temp_doc_id,
+                major=faculty,
+                jurusan=program,
+                judul_skripsi=judul_skripsi,
+                document_type=document_type,
+            ),
+            similarity_check_id=f"test_{uuid4()}",  # dummy ID (tidak disimpan)
+        )
+        
+        result = agent.run(req)
+        log.info("Similarity check completed: %.2f%% overall similarity", result.overall_similarity)
+        
+        return result
+        
     except Exception as exc:
         log.error("Similarity check failed: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=str(exc))
+    
+    finally:
+        # Cleanup: delete temporary chunks
+        if temp_doc_id:
+            try:
+                get_supabase().table("document_chunks").delete().eq("document_id", temp_doc_id).execute()
+                log.info("Temporary chunks cleaned up: %s", temp_doc_id)
+            except Exception as exc:
+                log.warning("Cleanup failed for %s: %s", temp_doc_id, exc)
 
 
 

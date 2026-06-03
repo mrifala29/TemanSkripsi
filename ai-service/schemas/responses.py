@@ -3,6 +3,8 @@ Response models for all AI service endpoints.
 """
 from __future__ import annotations
 
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -44,7 +46,7 @@ class SimulationMessageResponse(BaseModel):
 
 
 # ─────────────────────────────────────────────
-# Similarity
+# Similarity + Typo Check
 # ─────────────────────────────────────────────
 
 class SimilarChunkItem(BaseModel):
@@ -55,7 +57,29 @@ class SimilarChunkItem(BaseModel):
     source_document_title: str
 
 
+class TypoItem(BaseModel):
+    typo: str                       # The erroneous word/phrase as found in the text
+    correction: str                 # Suggested correction
+    page: int                       # Page number in the document (1-indexed)
+    line: int                       # Estimated line within the page (1-indexed)
+    context: str                    # Surrounding sentence fragment for location
+    category: str                   # "spelling" | "grammatical" | "punctuation"
+
+
+class TypoCategories(BaseModel):
+    spelling_errors: int = 0
+    grammatical_errors: int = 0
+    punctuation_errors: int = 0
+
+
+class TypoCheckResult(BaseModel):
+    total_typos_detected: int
+    typo_categories: TypoCategories
+    typos_with_location: list[TypoItem]
+
+
 class SimilarityResponse(BaseModel):
-    overall_similarity: float       # 0–100 percentage
+    overall_similarity: float               # 0–100 percentage
     similar_chunks: list[SimilarChunkItem]
+    typo_check: Optional[TypoCheckResult] = None   # None for proposals
     note: str

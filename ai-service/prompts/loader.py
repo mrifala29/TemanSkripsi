@@ -112,6 +112,18 @@ class PromptLoader:
         """Load a .md file relative to PROMPTS_DIR by its slug (no extension)."""
         return self._read(PROMPTS_DIR / f"{path_slug}.md")
 
+    def build_typo_prompt(self, pages_text: str) -> str:
+        """
+        Build a standalone typo-detection prompt from
+        services/kesamaan/typo_check.md.
+
+        Unlike build_prompt(), this does NOT prepend system/base.md or a
+        fakultas layer — typo detection is language-agnostic and doesn't
+        need the examiner persona.
+        """
+        template = self._load_file("services/kesamaan/typo_check")
+        return self._interpolate(template, {"pages_text": pages_text})
+
     # ──────────────────────────────────────────
     # Utilities
     # ──────────────────────────────────────────
