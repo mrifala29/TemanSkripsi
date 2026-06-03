@@ -64,6 +64,31 @@ def extract_pages_from_pdf(data: bytes) -> list[str]:
     return [page.get_text() for page in doc]
 
 
+def extract_pages_from_text(text: str, approx_lines_per_page: int = 40) -> list[str]:
+    """
+    Split extracted text into logical "pages" for typo detection.
+
+    Since raw extracted text doesn't have page boundaries, we approximate
+    by splitting every N lines (default 40 lines ≈ 1 physical page).
+
+    Args:
+        text: Full extracted text from document
+        approx_lines_per_page: Lines per logical page (adjust for document density)
+
+    Returns:
+        List of text chunks representing "pages"
+    """
+    lines = text.split('\n')
+    pages = []
+    
+    for i in range(0, len(lines), approx_lines_per_page):
+        page_text = '\n'.join(lines[i:i + approx_lines_per_page])
+        if page_text.strip():
+            pages.append(page_text)
+    
+    return pages if pages else [text]  # Return at least 1 page if text not empty
+
+
 def _from_pdf(data: bytes) -> str:
     doc = fitz.open(stream=data, filetype="pdf")
     return "\n\n".join(page.get_text() for page in doc)

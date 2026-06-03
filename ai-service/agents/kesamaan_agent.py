@@ -174,6 +174,110 @@ class KesamaanAgent:
             ),
         )
 
+    def run_from_text(
+        self,
+        text: str,
+        major: str,
+        jurusan: str,
+        judul_skripsi: str,
+        document_type: str,
+    ) -> SimilarityResponse:
+        """
+        Run similarity check directly from extracted text — no embedding to database.
+        Used by the /documents/similarity endpoint (Swagger + direct upload testing).
+
+        This method:
+        1. Chunks the text WITHOUT embedding to database
+        2. Compares chunks against existing documents in the database
+        3. Runs typo detection if document_type == "final_report"
+        4. Returns results WITHOUT saving to similarity_checks table
+        """
+        from parsers.embedder import chunk_text
+
+        # ── 1. Chunk the text (no embedding to DB) ─────────────────────────
+        chunks = chunk_text(text)
+        if not chunks:
+            return SimilarityResponse(
+                overall_similarity=0.0,
+                similar_chunks=[],
+                typo_check=None,
+                note="File tidak menghasilkan konten yang dapat dianalisis.",
+            )
+
+        # ── 2. Compare chunks against existing documents ────────────────────
+        all_matches: list[dict] = []
+        for chunk_content in chunks:
+            try:
+                embedding = get_embedding(chunk_content, self.embeddings)
+                matches = find_similar_chunks(
+                    supabase=self.supabase,
+                    embedding=embedding,
+                    exclude_document_id=None,  # no document to exclude
+                )
+                all_matches.extend(matches)
+            except Exception as exc:
+                log.warning("Failed to embed chunk: %s", exc)
+                continue
+
+        # ── 3. Deduplicate — keep highest similarity per chunk id ──────────
+        seen: dict[str, dict] = {}
+        for m in all_matches:
+            cid = m["id"]
+            if cid not in seen or m.get("similarity", 0) > seen[cid].get("similarity", 0):
+                seen[cid] = m
+
+        top_matches = sorted(
+            seen.values(),
+            key=lambda x: x.get("similarity", 0),
+            reverse=True,
+        )[: settings.similarity_max_results]
+
+        # ── 4. Overall similarity percentage ──────────────────────────────
+        if all_matches:
+            matched = len({m["id"] for m in all_matches})
+            overall = min(round(matched / len(chunks) * 100, 2), 100.0)
+        else:
+            overall = 0.0
+
+        # ── 5. Build similar_chunks list ───────────────────────────────────
+        similar_chunks = [
+            SimilarChunkItem(
+                chunk_id=m["id"],
+                content_preview=(
+                    m["content"][:200] + ("..." if len(m["content"]) > 200 else "")
+                ),
+                similarity_score=round(m.get("similarity", 0), 4),
+                source_document_id=m.get("document_id", ""),
+                source_document_title=m.get("document_title", "Dokumen lain"),
+            )
+            for m in top_matches
+        ]
+
+        # ── 6. Typo check (Laporan Akhir only) ─────────────────────────────
+        typo_check: Optional[TypoCheckResult] = None
+        if document_type == "final_report":
+            if self.llm is not None:
+                try:
+                    typo_check = self._check_typos_from_text(text)
+                    log.info(
+                        "Typo check completed from text — %d typos found",
+                        typo_check.total_typos_detected,
+                    )
+                except Exception as exc:
+                    log.error("Typo detection failed: %s", exc, exc_info=True)
+            else:
+                log.warning("LLM not injected — typo detection skipped")
+
+        return SimilarityResponse(
+            overall_similarity=overall,
+            similar_chunks=similar_chunks,
+            typo_check=typo_check,
+            note=(
+                "Pengecekan bersifat internal (antar dokumen di sistem). "
+                "Hasil ini bukan pengganti Turnitin atau plagiarism checker profesional."
+            ),
+        )
+
     # ──────────────────────────────────────────────────────────────────────
     # Typo Detection
     # ──────────────────────────────────────────────────────────────────────
@@ -213,6 +317,38 @@ class KesamaanAgent:
         log.info(
             "Typo detection — %d pages for document %s", len(pages), document_id
         )
+
+        # Process pages in batches
+        all_typos: list[TypoItem] = []
+        for batch_start in range(0, len(pages), _TYPO_BATCH_SIZE):
+            batch = pages[batch_start : batch_start + _TYPO_BATCH_SIZE]
+            batch_typos = self._detect_typos_batch(batch, start_page=batch_start + 1)
+            all_typos.extend(batch_typos)
+
+        # Categorise
+        spelling    = sum(1 for t in all_typos if t.category == "spelling")
+        grammatical = sum(1 for t in all_typos if t.category == "grammatical")
+        punctuation = sum(1 for t in all_typos if t.category == "punctuation")
+
+        return TypoCheckResult(
+            total_typos_detected=len(all_typos),
+            typo_categories=TypoCategories(
+                spelling_errors=spelling,
+                grammatical_errors=grammatical,
+                punctuation_errors=punctuation,
+            ),
+            typos_with_location=all_typos,
+        )
+
+    def _check_typos_from_text(self, text: str) -> TypoCheckResult:
+        """
+        Run typo detection directly from extracted text (no database lookup).
+        Used by run_from_text() for testing/direct upload scenarios.
+        """
+        from parsers.extractor import extract_pages_from_text
+
+        pages = extract_pages_from_text(text)
+        log.info("Typo detection — %d pages from extracted text", len(pages))
 
         # Process pages in batches
         all_typos: list[TypoItem] = []

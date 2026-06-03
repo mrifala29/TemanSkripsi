@@ -27,7 +27,6 @@ from agents.analisis_agent import AnalisisAgent
 from agents.kesamaan_agent import KesamaanAgent
 from agents.simulasi_agent import SimulasiAgent
 from core.dependencies import get_embeddings, get_llm, get_supabase
-from parsers.embedder import chunk_text, embed_and_store
 from parsers.extractor import extract_text
 from schemas import (
     AnalysisResponse,
@@ -306,56 +305,24 @@ async def check_similarity(
     if file_ext != "pdf":
         raise HTTPException(status_code=400, detail="File harus berformat PDF")
 
-    temp_doc_id = None
     try:
-        # Generate temporary document_id
-        temp_doc_id = f"test_{uuid4()}"
-        
         # Extract text from uploaded file
         raw = await file.read()
         text = extract_text(raw, "pdf")
-        chunks = chunk_text(text)
         
-        if not chunks:
-            raise ValueError("File PDF tidak menghasilkan chunks (mungkin file kosong atau corrupted)")
-        
-        # Embed and store chunks temporarily
-        supabase = get_supabase()
-        embeddings = get_embeddings()
-        embed_and_store(supabase, embeddings, temp_doc_id, chunks)
-        
-        log.info("Document embedded for similarity check: %s (%d chunks)", temp_doc_id, len(chunks))
-        
-        # Run similarity check via KesamaanAgent
-        agent = KesamaanAgent(supabase, embeddings, get_llm())
-        req = SimilarityRequest(
-            context=DocumentContext(
-                document_id=temp_doc_id,
-                major=faculty,
-                jurusan=program,
-                judul_skripsi=judul_skripsi,
-                document_type=document_type,
-            ),
-            similarity_check_id=f"test_{uuid4()}",  # dummy ID (tidak disimpan)
+        # Run similarity check via KesamaanAgent (no embedding to DB)
+        agent = KesamaanAgent(get_supabase(), get_embeddings(), get_llm())
+        return agent.run_from_text(
+            text=text,
+            major=faculty,
+            jurusan=program,
+            judul_skripsi=judul_skripsi,
+            document_type=document_type,
         )
-        
-        result = agent.run(req)
-        log.info("Similarity check completed: %.2f%% overall similarity", result.overall_similarity)
-        
-        return result
         
     except Exception as exc:
         log.error("Similarity check failed: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=str(exc))
-    
-    finally:
-        # Cleanup: delete temporary chunks
-        if temp_doc_id:
-            try:
-                get_supabase().table("document_chunks").delete().eq("document_id", temp_doc_id).execute()
-                log.info("Temporary chunks cleaned up: %s", temp_doc_id)
-            except Exception as exc:
-                log.warning("Cleanup failed for %s: %s", temp_doc_id, exc)
 
 
 

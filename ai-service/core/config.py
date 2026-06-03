@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     llm_max_token: int = 2000  # from env LLM_MAX_TOKEN (informational)
 
     # ── Embedding (fixed for now) ──────────────────────────────────────────
-    embedding_model: str = "models/text-embedding-004"
+    embedding_model: str = "models/text-embedding-005"
 
     # ── Document parsing ───────────────────────────────────────────────────
     chunk_size: int = 800       # characters per chunk
