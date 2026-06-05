@@ -256,10 +256,12 @@ class KesamaanAgent:
                 per_chapter_results.append(
                     ChapterAIDetection(
                         bab=name,
+                        total_sentences=0,
+                        ai_sentences_count=0,
                         ai_percentage=0.0,
                         confidence="low",
                         indicators=["Gagal menganalisis bab ini karena error sistem"],
-                        evidence=[]
+                        ai_sentences=[]
                     )
                 )
         
@@ -280,17 +282,19 @@ class KesamaanAgent:
 
     def _parse_ai_detection_response(self, raw: str, default_bab_name: str) -> ChapterAIDetection:
         """
-        Parse LLM output for AI detection. Expects a JSON object.
+        Parse LLM output for AI detection. Expects a JSON object with sentence-level detection.
         """
         match = re.search(r"\{.*?\}", raw, re.DOTALL)
         if not match:
             log.warning("No JSON object found in AI detection response: %s", raw[:200])
             return ChapterAIDetection(
                 bab=default_bab_name,
+                total_sentences=0,
+                ai_sentences_count=0,
                 ai_percentage=0.0,
                 confidence="low",
                 indicators=["Gagal memproses respons AI"],
-                evidence=[]
+                ai_sentences=[]
             )
             
         try:
@@ -299,13 +303,26 @@ class KesamaanAgent:
             log.warning("AI detection JSON parse error: %s | snippet: %s", exc, raw[:200])
             return ChapterAIDetection(
                 bab=default_bab_name,
+                total_sentences=0,
+                ai_sentences_count=0,
                 ai_percentage=0.0,
                 confidence="low",
                 indicators=["Gagal memproses respons AI (JSON rusak)"],
-                evidence=[]
+                ai_sentences=[]
             )
             
         bab_name = data.get("bab", default_bab_name)
+        
+        # Parse new fields
+        try:
+            total_sentences = int(data.get("total_sentences", 0))
+        except (TypeError, ValueError):
+            total_sentences = 0
+            
+        try:
+            ai_sentences_count = int(data.get("ai_sentences_count", 0))
+        except (TypeError, ValueError):
+            ai_sentences_count = 0
         
         try:
             ai_percentage = float(data.get("ai_percentage", 0.0))
@@ -320,16 +337,18 @@ class KesamaanAgent:
         if not isinstance(indicators, list):
             indicators = [str(indicators)] if indicators else []
             
-        evidence = data.get("evidence", [])
-        if not isinstance(evidence, list):
-            evidence = [str(evidence)] if evidence else []
+        ai_sentences = data.get("ai_sentences", [])
+        if not isinstance(ai_sentences, list):
+            ai_sentences = [str(ai_sentences)] if ai_sentences else []
             
         return ChapterAIDetection(
             bab=bab_name,
+            total_sentences=total_sentences,
+            ai_sentences_count=ai_sentences_count,
             ai_percentage=ai_percentage,
             confidence=confidence,
             indicators=[str(i) for i in indicators[:3]],
-            evidence=[str(e) for e in evidence[:3]]
+            ai_sentences=[str(s) for s in ai_sentences[:10]]
         )
 
     # ──────────────────────────────────────────────────────────────────────

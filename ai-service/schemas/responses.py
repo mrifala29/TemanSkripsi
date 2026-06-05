@@ -51,10 +51,12 @@ class SimulationMessageResponse(BaseModel):
 
 class ChapterAIDetection(BaseModel):
     bab: str                       # Name of the chapter (e.g., "BAB I", "BAB II", etc.)
-    ai_percentage: float           # Estimated AI written percentage (0–100)
+    total_sentences: int           # Total number of sentences in the chapter
+    ai_sentences_count: int        # Number of sentences detected as AI-written
+    ai_percentage: float           # Calculated as (ai_sentences_count / total_sentences) × 100
     confidence: str                # "high" | "medium" | "low"
     indicators: list[str]          # Ciri-ciri tulisan AI found
-    evidence: list[str]            # List of sentences indicating AI authorship
+    ai_sentences: list[str]        # Full sentences that are detected as AI-written (max 10 strongest examples)
 
 
 class TypoItem(BaseModel):
