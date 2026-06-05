@@ -19,6 +19,7 @@ type TypoDetail = {
   page: number
   line: number
   context: string
+  category: 'spelling' | 'grammatical' | 'punctuation'
 }
 
 type TypoCheck = {
@@ -31,14 +32,26 @@ type TypoCheck = {
   typos_with_location: TypoDetail[]
 }
 
+type ChapterAIDetection = {
+  bab: string
+  total_sentences: number
+  ai_sentences_count: number
+  ai_percentage: number
+  confidence: 'high' | 'medium' | 'low'
+  indicators: string[]
+  ai_sentences: string[]
+}
+
 type SimilarityCheck = {
   id: string
   document_id: string
-  similarity_score: number | null
+  overall_ai_percentage: number
   status: string
   created_at: string
-  chapters?: Array<{ name: string; similarity: number }>
+  per_chapter?: ChapterAIDetection[]
+  summary?: string
   typo_check?: TypoCheck | null
+  note?: string
 }
 
 function colorFor(val: number, thresholds: [number, number]) {
@@ -222,12 +235,15 @@ function SimilarityContent() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm text-center">
                   <p className={`text-5xl font-bold ${
-                    (selected.similarity_score ?? 0) <= 20 ? 'text-emerald-600' :
-                    (selected.similarity_score ?? 0) <= 35 ? 'text-amber-500' : 'text-red-500'
+                    (selected.overall_ai_percentage ?? 0) <= 30 ? 'text-emerald-600' :
+                    (selected.overall_ai_percentage ?? 0) <= 70 ? 'text-amber-500' : 'text-red-500'
                   }`}>
-                    {selected.similarity_score != null ? `${selected.similarity_score}%` : '—'}
+                    {selected.overall_ai_percentage != null ? `${selected.overall_ai_percentage.toFixed(1)}%` : '—'}
                   </p>
-                  <p className="mt-1.5 text-sm text-gray-500">Estimasi Kemiripan</p>
+                  <p className="mt-1.5 text-sm text-gray-500">Persentase AI Keseluruhan</p>
+                  {selected.summary && (
+                    <p className="text-xs text-gray-400 mt-2">{selected.summary}</p>
+                  )}
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm text-center">
                   <p className={`text-5xl font-bold ${
@@ -240,31 +256,85 @@ function SimilarityContent() {
                   <p className="mt-1.5 text-sm text-gray-500">Typo Terdeteksi</p>
                   {selected.typo_check && (
                     <p className="text-xs text-gray-400 mt-1">
-                      {selected.typo_check.typo_categories.spelling_errors} ejaan · {selected.typo_check.typo_categories.grammatical_errors} tata bahasa · {selected.typo_check.typo_categories.punctuation_errors} tanda baca
+                      {selected.typo_check.typo_categories.spelling_errors} ejaan · {selected.typo_check.typo_categories.grammatical_errors} grammar · {selected.typo_check.typo_categories.punctuation_errors} tanda baca
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Per-chapter breakdown if available */}
-              {selected.chapters && selected.chapters.length > 0 && (
+              {/* Note/Disclaimer */}
+              {selected.note && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-700">
+                  ⚠️ {selected.note}
+                </div>
+              )}
+
+              {/* Per-chapter AI detection breakdown */}
+              {selected.per_chapter && selected.per_chapter.length > 0 && (
                 <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-100">
-                    <h2 className="font-semibold text-gray-900">Rincian Per Bab</h2>
+                    <h2 className="font-semibold text-gray-900">Deteksi Tulisan AI Per Bab</h2>
                   </div>
                   <div className="divide-y divide-gray-50">
-                    {selected.chapters.map((ch) => (
-                      <div key={ch.name} className="px-6 py-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                          <span className="text-sm font-medium text-gray-800">{ch.name}</span>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeFor(ch.similarity, [15, 30])}`}>
-                            {ch.similarity}% mirip
-                          </span>
+                    {selected.per_chapter.map((ch, i) => (
+                      <details key={i} className="group">
+                        <summary className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors list-none">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm font-medium text-gray-800">{ch.bab}</span>
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeFor(ch.ai_percentage, [30, 70])}`}>
+                                {ch.ai_percentage.toFixed(1)}% AI
+                              </span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                ch.confidence === 'high' ? 'bg-red-50 text-red-600' :
+                                ch.confidence === 'medium' ? 'bg-amber-50 text-amber-600' :
+                                'bg-gray-50 text-gray-600'
+                              }`}>
+                                {ch.confidence}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-400">{ch.ai_sentences_count} dari {ch.total_sentences} kalimat</span>
+                          </div>
+                          <div className="bg-gray-100 rounded-full h-1.5 overflow-hidden mt-2">
+                            <div className={`h-full rounded-full ${colorFor(ch.ai_percentage, [30, 70])}`} style={{ width: `${ch.ai_percentage}%` }} />
+                          </div>
+                        </summary>
+                        <div className="px-6 py-4 bg-gray-50 space-y-3">
+                          {/* Indicators */}
+                          {ch.indicators.length > 0 && (
+                            <div>
+                              <h4 className="text-xs font-semibold text-gray-700 mb-2">🚨 Indikator AI:</h4>
+                              <ul className="space-y-1">
+                                {ch.indicators.map((ind, j) => (
+                                  <li key={j} className="text-xs text-gray-600 flex items-start gap-2">
+                                    <span className="text-red-500 mt-0.5">•</span>
+                                    <span>{ind}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {/* AI Sentences */}
+                          {ch.ai_sentences.length > 0 && (
+                            <div>
+                              <h4 className="text-xs font-semibold text-gray-700 mb-2">📝 Kalimat Terdeteksi AI ({ch.ai_sentences.length}):</h4>
+                              <div className="space-y-2">
+                                {ch.ai_sentences.map((sentence, j) => (
+                                  <div key={j} className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                    <p className="text-xs text-gray-700 leading-relaxed">{sentence}</p>
+                                    <button
+                                      onClick={() => navigator.clipboard.writeText(sentence)}
+                                      className="text-xs text-red-600 hover:text-red-700 mt-1.5 font-medium"
+                                    >
+                                      📋 Copy
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                          <div className={`h-full rounded-full ${colorFor(ch.similarity, [15, 30])}`} style={{ width: `${ch.similarity}%` }} />
-                        </div>
-                      </div>
+                      </details>
                     ))}
                   </div>
                 </div>
@@ -275,13 +345,14 @@ function SimilarityContent() {
                 <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                     <h2 className="font-semibold text-gray-900">✏️ Daftar Typo</h2>
-                    <span className="text-xs text-gray-400">{selected.typo_check.total_typos_detected} typo ditemukan</span>
+                    <span className="text-xs text-gray-400">{selected.typo_check.total_typos_detected} kesalahan</span>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-100 text-xs text-gray-500 text-left">
-                          <th className="px-6 py-3 font-medium">Typo</th>
+                          <th className="px-6 py-3 font-medium">Kategori</th>
+                          <th className="px-4 py-3 font-medium">Typo</th>
                           <th className="px-4 py-3 font-medium">Koreksi</th>
                           <th className="px-4 py-3 font-medium">Hal.</th>
                           <th className="px-4 py-3 font-medium">Baris</th>
@@ -291,11 +362,20 @@ function SimilarityContent() {
                       <tbody className="divide-y divide-gray-50">
                         {selected.typo_check.typos_with_location.map((t, i) => (
                           <tr key={i} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-3 font-medium text-red-600">{t.typo}</td>
-                            <td className="px-4 py-3 text-emerald-700">{t.correction}</td>
+                            <td className="px-6 py-3">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                t.category === 'spelling' ? 'bg-red-50 text-red-600' :
+                                t.category === 'grammatical' ? 'bg-amber-50 text-amber-600' :
+                                'bg-blue-50 text-blue-600'
+                              }`}>
+                                {t.category}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 font-medium text-red-600 line-through">{t.typo}</td>
+                            <td className="px-4 py-3 text-emerald-700 font-medium">{t.correction}</td>
                             <td className="px-4 py-3 text-gray-500">{t.page}</td>
                             <td className="px-4 py-3 text-gray-500">{t.line}</td>
-                            <td className="px-4 py-3 text-gray-400 text-xs max-w-xs truncate">{t.context}</td>
+                            <td className="px-4 py-3 text-gray-400 text-xs max-w-xs truncate" title={t.context}>{t.context}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -311,7 +391,7 @@ function SimilarityContent() {
               )}
 
               <p className="text-xs text-gray-400 text-center">
-                ⚠️ Hasil merupakan estimasi internal. Bukan setara dengan Turnitin atau alat plagiasi profesional.
+                ⚠️ Hasil deteksi tulisan AI merupakan estimasi berbasis model bahasa (LLM). Bukan bukti mutlak plagiarisme atau penggunaan AI. Gunakan sebagai referensi awal untuk review manual.
               </p>
             </>
           )}

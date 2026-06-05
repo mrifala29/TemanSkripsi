@@ -37,12 +37,12 @@ const FEATURES = [
   },
   {
     icon: '🔍',
-    title: 'Cek Kesamaan & Typo',
-    desc: 'Periksa estimasi kemiripan teks + deteksi typo lengkap dengan lokasi halaman dan baris — untuk Laporan Akhir.',
+    title: 'Cek Tulisan AI & Typo',
+    desc: 'Deteksi indikasi tulisan AI per bab dengan perhitungan transparan. Plus deteksi typo lengkap dengan lokasi halaman dan baris.',
     link: '/plagiasi',
     color: 'border-amber-100 hover:border-amber-300',
     iconBg: 'bg-amber-50',
-    tag: 'Deteksi Typo',
+    tag: 'AI Detection',
     tagColor: 'bg-amber-500 text-white',
   },
 ]
@@ -61,17 +61,17 @@ const FEATURE_STEPS: Record<string, { icon: string; num: string; title: string; 
     { icon: '💡', num: '04', title: 'Rekomendasi Aksi',       desc: 'Saran perbaikan spesifik dan potensi pertanyaan sidang' },
   ],
   plagiasi: [
-    { icon: '📤', num: '01', title: 'Unggah Laporan Akhir',   desc: 'Upload PDF Laporan Akhir ke sistem' },
-    { icon: '🔍', num: '02', title: 'Analisis Kemiripan',     desc: 'Sistem mengukur kemiripan teks menggunakan pemrosesan vektor' },
-    { icon: '✏️', num: '03', title: 'Deteksi Typo',           desc: 'Sistem mencari typo dan menampilkan lokasi halaman serta baris' },
-    { icon: '📋', num: '04', title: 'Laporan Lengkap',        desc: 'Kemiripan per bab + daftar typo dengan konteks kalimat' },
+    { icon: '📤', num: '01', title: 'Unggah Dokumen',          desc: 'Upload PDF Proposal atau Laporan Akhir ke sistem' },
+    { icon: '🤖', num: '02', title: 'Analisis Per Bab',        desc: 'AI memecah dokumen per bab dan analisis indikasi tulisan AI' },
+    { icon: '✏️', num: '03', title: 'Deteksi Typo',            desc: 'Sistem mencari typo dengan lokasi halaman dan baris yang jelas' },
+    { icon: '📋', num: '04', title: 'Laporan Detail',          desc: 'Lihat persentase AI per bab (dihitung dari jumlah kalimat) + daftar typo' },
   ],
 }
 
 const TAB_CONFIG = [
   { key: 'simulasi', label: '🎤 Simulasi Sidang',       activeClass: 'bg-indigo-600 text-white border-indigo-600' },
   { key: 'analisa',  label: '📊 Analisa & Penilaian',   activeClass: 'bg-emerald-600 text-white border-emerald-600' },
-  { key: 'plagiasi', label: '🔍 Cek Kesamaan & Typo',   activeClass: 'bg-amber-500 text-white border-amber-500' },
+  { key: 'plagiasi', label: '🔍 Cek Tulisan AI & Typo', activeClass: 'bg-amber-500 text-white border-amber-500' },
 ]
 
 const TAB_COLORS: Record<string, { line: string; border: string; num: string }> = {
@@ -91,11 +91,11 @@ const ANALYSIS_SCORES = [
 ]
 
 const SIMILARITY_CHAPTERS = [
-  { chapter: 'BAB I – Pendahuluan',         similarity: 12, typos: 3 },
-  { chapter: 'BAB II – Tinjauan Pustaka',   similarity: 28, typos: 7 },
-  { chapter: 'BAB III – Metodologi',        similarity: 10, typos: 2 },
-  { chapter: 'BAB IV – Hasil & Pembahasan', similarity: 14, typos: 5 },
-  { chapter: 'BAB V – Kesimpulan',          similarity:  8, typos: 1 },
+  { chapter: 'BAB I – Pendahuluan',         ai_percentage: 25, sentences: '5 dari 20', typos: 3 },
+  { chapter: 'BAB II – Tinjauan Pustaka',   ai_percentage: 68, sentences: '15 dari 22', typos: 7 },
+  { chapter: 'BAB III – Metodologi',        ai_percentage: 18, sentences: '3 dari 17', typos: 2 },
+  { chapter: 'BAB IV – Hasil & Pembahasan', ai_percentage: 42, sentences: '10 dari 24', typos: 5 },
+  { chapter: 'BAB V – Kesimpulan',          ai_percentage: 15, sentences: '2 dari 13', typos: 1 },
 ]
 
 const CHAT_DEMO = [
@@ -547,18 +547,19 @@ export default function Home() {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-gray-700 font-medium">{ch.chapter}</span>
                       <div className="flex gap-1.5">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.similarity <= 15 ? 'text-emerald-700 bg-emerald-50' : ch.similarity <= 30 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>{ch.similarity}% mirip</span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.ai_percentage <= 30 ? 'text-emerald-700 bg-emerald-50' : ch.ai_percentage <= 70 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>{ch.ai_percentage}% AI</span>
+                        <span className="text-[10px] text-gray-500 px-1.5 py-0.5">{ch.sentences}</span>
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ch.typos === 0 ? 'text-emerald-700 bg-emerald-50' : ch.typos <= 5 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>{ch.typos} typo</span>
                       </div>
                     </div>
                     <div className="bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                      <motion.div className={`h-full rounded-full ${ch.similarity <= 15 ? 'bg-emerald-500' : ch.similarity <= 30 ? 'bg-amber-400' : 'bg-red-500'}`} initial={{ width: 0 }} whileInView={{ width: `${Math.min(ch.similarity * 2.5, 100)}%` }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.1 }} />
+                      <motion.div className={`h-full rounded-full ${ch.ai_percentage <= 30 ? 'bg-emerald-500' : ch.ai_percentage <= 70 ? 'bg-amber-400' : 'bg-red-500'}`} initial={{ width: 0 }} whileInView={{ width: `${ch.ai_percentage}%` }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.1 }} />
                     </div>
                   </div>
                 ))}
               </div>
               <div className="px-5 py-3 border-t border-gray-100 bg-white">
-                <p className="text-[10px] text-gray-400">⚠️ Hasil merupakan estimasi internal. Bukan pengganti Turnitin.</p>
+                <p className="text-[10px] text-gray-400">⚠️ Deteksi AI adalah estimasi berbasis LLM. Gunakan sebagai referensi, bukan bukti mutlak.</p>
               </div>
             </motion.div>
           </div>
