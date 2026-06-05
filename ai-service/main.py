@@ -257,20 +257,18 @@ async def check_similarity(
     document_type: str = Form(..., description="Tipe dokumen: proposal | final_report"),
 ):
     """
-    Periksa kemiripan dokumen secara internal via **pgvector cosine similarity**
-    + deteksi typo berbasis LLM (khusus Laporan Akhir).
+    Deteksi penulisan AI per bab skripsi + deteksi kesalahan tulis (typo) berbasis LLM.
 
     **Upload file PDF langsung** — tidak perlu pre-processing.
 
     ---
 
-    ### Similarity Check (semua tipe dokumen)
-    - Membandingkan setiap chunk dokumen target dengan chunk dari dokumen lain di sistem
-    - Threshold cosine similarity: **0.70**
-    - Mengembalikan persentase kemiripan overall + top-10 matching chunks
+    ### Deteksi Tulisan AI (semua tipe dokumen)
+    - Memotong dokumen berdasarkan struktur bab ("BAB I", "BAB II", dst.)
+    - Menganalisis pola kalimat, transisi generik, dan kosakata klise yang khas dihasilkan AI
+    - Mengembalikan estimasi persentase tulisan AI per bab serta secara keseluruhan
 
-    ### Typo Detection (Laporan Akhir saja)
-    - Hanya berjalan jika `document_type == "final_report"`
+    ### Deteksi Typo (semua tipe dokumen)
     - LLM membaca teks skripsi halaman per halaman dan mengidentifikasi:
       - **spelling** — salah ejaan (contoh: "metodelogi" → "metodologi")
       - **grammatical** — kesalahan tata bahasa
@@ -287,13 +285,13 @@ async def check_similarity(
     - `document_type`: "proposal" atau "final_report"
 
     **Output**:
-    - `overall_similarity`: Persentase kemiripan (0–100)
-    - `similar_chunks`: Top-10 chunk paling mirip dengan preview dan similarity score
-    - `typo_check`: Hasil deteksi typo per halaman (null untuk Proposal)
+    - `overall_ai_percentage`: Persentase tulisan AI keseluruhan (0–100)
+    - `per_chapter`: Rincian deteksi AI per bab (nama bab, persentase, keyakinan, indikator, evidence)
+    - `summary`: Ringkasan analisis
+    - `typo_check`: Hasil deteksi typo per halaman dengan lokasi detail
 
     **Catatan**: 
-    - Internal check only — bukan pengganti Turnitin
-    - Hasil tidak disimpan ke database (temporary chunks akan dihapus)
+    - Hasil merupakan estimasi berbasis heuristik model bahasa (LLM) dan bukan bukti mutlak plagiarisme atau penggunaan AI.
     """
     if document_type not in ("proposal", "final_report"):
         raise HTTPException(
@@ -310,7 +308,7 @@ async def check_similarity(
         raw = await file.read()
         text = extract_text(raw, "pdf")
         
-        # Run similarity check via KesamaanAgent (no embedding to DB)
+        # Run AI writing detection + typo check via KesamaanAgent (no embedding to DB)
         agent = KesamaanAgent(get_supabase(), get_embeddings(), get_llm())
         return agent.run_from_text(
             text=text,
@@ -321,8 +319,9 @@ async def check_similarity(
         )
         
     except Exception as exc:
-        log.error("Similarity check failed: %s", exc, exc_info=True)
+        log.error("AI writing detection and typo check failed: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=str(exc))
+
 
 
 

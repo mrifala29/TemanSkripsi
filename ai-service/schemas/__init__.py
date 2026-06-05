@@ -12,7 +12,7 @@ from schemas.requests import (
 from schemas.responses import (
     AnalysisResponse,
     AspectAnalysis,
-    SimilarChunkItem,
+    ChapterAIDetection,
     SimulationMessageResponse,
     SimulationStartResponse,
     SimilarityResponse,
@@ -35,7 +35,7 @@ __all__ = [
     "AspectAnalysis",
     "SimulationStartResponse",
     "SimulationMessageResponse",
-    "SimilarChunkItem",
+    "ChapterAIDetection",
     "SimilarityResponse",
     "TypoItem",
     "TypoCategories",

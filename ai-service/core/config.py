@@ -6,6 +6,9 @@ Never scatter magic numbers across the codebase — reference settings instead.
 """
 from pathlib import Path
 
+# pyrefly: ignore [missing-import]
+from pydantic import Field
+# pyrefly: ignore [missing-import]
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Resolve root .env regardless of working directory
@@ -19,9 +22,13 @@ class Settings(BaseSettings):
 
     # ── LLM Configuration ──────────────────────────────────────────────────
     llm_api_key: str  # from env LLM_API_KEY
-    llm_model: str = "gemini-1.5-flash"  # from env LLM_MODEL
+    llm_base_url: str = "https://api.groq.com/openai/v1"  # from env LLM_BASE_URL (default to Groq)
+    llm_model: str = "llama-3.3-70b-versatile"  # from env LLM_MODEL
     llm_temperature: float = 0.7  # from env LLM_TEMPERATURE
     llm_max_token: int = 2000  # from env LLM_MAX_TOKEN (informational)
+
+    # ── Embedding Configuration ────────────────────────────────────────────
+    embedding_api_key: str = Field(validation_alias="GEMINI_API_KEY")  # from env GEMINI_API_KEY
 
     # ── Embedding (fixed for now) ──────────────────────────────────────────
     embedding_model: str = "models/text-embedding-005"

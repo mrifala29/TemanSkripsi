@@ -10,7 +10,8 @@ Usage in FastAPI routes via DI:
 """
 from functools import lru_cache
 
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_openai import ChatOpenAI
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from supabase import Client, create_client
 
 from core.config import settings
@@ -23,13 +24,13 @@ def get_supabase() -> Client:
 
 
 @lru_cache(maxsize=1)
-def get_llm() -> ChatGoogleGenerativeAI:
-    """Singleton LangChain LLM wrapper for Gemini."""
-    return ChatGoogleGenerativeAI(
+def get_llm() -> ChatOpenAI:
+    """Singleton LangChain LLM wrapper for OpenAI compatible APIs."""
+    return ChatOpenAI(
         model=settings.llm_model,
-        google_api_key=settings.llm_api_key,
+        api_key=settings.llm_api_key,
+        base_url=settings.llm_base_url,
         temperature=settings.llm_temperature,
-        convert_system_message_to_human=True,
     )
 
 
@@ -38,6 +39,6 @@ def get_embeddings() -> GoogleGenerativeAIEmbeddings:
     """Singleton LangChain Embeddings wrapper for Gemini text-embedding-004."""
     return GoogleGenerativeAIEmbeddings(
         model=settings.embedding_model,
-        google_api_key=settings.llm_api_key,
+        google_api_key=settings.embedding_api_key,
         task_type="retrieval_query",
     )

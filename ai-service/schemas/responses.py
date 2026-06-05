@@ -46,15 +46,15 @@ class SimulationMessageResponse(BaseModel):
 
 
 # ─────────────────────────────────────────────
-# Similarity + Typo Check
+# AI Writing Detection + Typo Check
 # ─────────────────────────────────────────────
 
-class SimilarChunkItem(BaseModel):
-    chunk_id: str
-    content_preview: str
-    similarity_score: float         # 0.0–1.0
-    source_document_id: str
-    source_document_title: str
+class ChapterAIDetection(BaseModel):
+    bab: str                       # Name of the chapter (e.g., "BAB I", "BAB II", etc.)
+    ai_percentage: float           # Estimated AI written percentage (0–100)
+    confidence: str                # "high" | "medium" | "low"
+    indicators: list[str]          # Ciri-ciri tulisan AI found
+    evidence: list[str]            # List of sentences indicating AI authorship
 
 
 class TypoItem(BaseModel):
@@ -79,7 +79,9 @@ class TypoCheckResult(BaseModel):
 
 
 class SimilarityResponse(BaseModel):
-    overall_similarity: float               # 0–100 percentage
-    similar_chunks: list[SimilarChunkItem]
-    typo_check: Optional[TypoCheckResult] = None   # None for proposals
+    overall_ai_percentage: float            # 0–100 percentage
+    per_chapter: list[ChapterAIDetection]
+    summary: str
+    typo_check: Optional[TypoCheckResult] = None   # Can be None, but will be run for both proposal and final_report per settings
     note: str
+

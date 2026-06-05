@@ -124,6 +124,19 @@ class PromptLoader:
         template = self._load_file("services/kesamaan/typo_check")
         return self._interpolate(template, {"pages_text": pages_text})
 
+    def build_ai_detection_prompt(self, chapter_text: str, chapter_name: str, judul_skripsi: str) -> str:
+        """
+        Build a standalone AI detection prompt from
+        services/kesamaan/ai_detection.md.
+        """
+        template = self._load_file("services/kesamaan/ai_detection")
+        return self._interpolate(template, {
+            "chapter_text": chapter_text,
+            "chapter_name": chapter_name,
+            "judul_skripsi": judul_skripsi
+        })
+
+
     # ──────────────────────────────────────────
     # Utilities
     # ──────────────────────────────────────────
