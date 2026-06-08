@@ -1,410 +1,345 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { api } from '@/lib/api'
 
-type Document = {
-  id: string
-  file_name: string
-  title: string | null
-  parse_status: string
-}
+// DUMMY DATA
+const DUMMY_DOCUMENTS = [
+  {
+    id: '1',
+    title: 'Proposal Penelitian - Metode Pembelajaran Matematika',
+    file_name: 'proposal-matematika.pdf',
+    type: 'proposal',
+    status: 'done',
+  },
+  {
+    id: '2',
+    title: 'Laporan Akhir Skripsi - Pengaruh Media Digital',
+    file_name: 'laporan-akhir.pdf',
+    type: 'final_report',
+    status: 'done',
+  },
+  {
+    id: '4',
+    title: 'Revisi Proposal Setelah Bimbingan',
+    file_name: 'revisi-proposal-v2.pdf',
+    type: 'proposal',
+    status: 'done',
+  },
+]
 
-type TypoDetail = {
-  typo: string
-  correction: string
-  page: number
-  line: number
-  context: string
-  category: 'spelling' | 'grammatical' | 'punctuation'
-}
+const DUMMY_CHECKS = [
+  {
+    id: '1',
+    document: 'Proposal Penelitian - Metode Pembelajaran Matematika',
+    date: '2026-06-04T09:10:00Z',
+    ai_percentage: 12,
+    total_typos: 5,
+    highest_chapter: 'BAB II (18%)',
+    trend: 'down', // down = improvement
+    summary: 'Deteksi AI menurun dari 18% menjadi 12%. Typo berkurang dari 12 ke 5.',
+  },
+  {
+    id: '2',
+    document: 'Laporan Akhir Skripsi - Pengaruh Media Digital',
+    date: '2026-05-30T14:25:00Z',
+    ai_percentage: 8,
+    total_typos: 3,
+    highest_chapter: 'BAB I (14%)',
+    trend: 'same',
+    summary: 'Tingkat deteksi AI sangat rendah (8%). Hanya 3 typo minor ditemukan.',
+  },
+  {
+    id: '3',
+    document: 'Revisi Proposal Setelah Bimbingan',
+    date: '2026-05-25T11:40:00Z',
+    ai_percentage: 25,
+    total_typos: 15,
+    highest_chapter: 'BAB III (42%)',
+    trend: 'up',
+    summary: 'Deteksi AI cukup tinggi di BAB III. Perlu review manual. 15 typo perlu diperbaiki.',
+  },
+]
 
-type TypoCheck = {
-  total_typos_detected: number
-  typo_categories: {
-    spelling_errors: number
-    grammatical_errors: number
-    punctuation_errors: number
-  }
-  typos_with_location: TypoDetail[]
-}
-
-type ChapterAIDetection = {
-  bab: string
-  total_sentences: number
-  ai_sentences_count: number
-  ai_percentage: number
-  confidence: 'high' | 'medium' | 'low'
-  indicators: string[]
-  ai_sentences: string[]
-}
-
-type SimilarityCheck = {
-  id: string
-  document_id: string
-  overall_ai_percentage: number
-  status: string
-  created_at: string
-  per_chapter?: ChapterAIDetection[]
-  summary?: string
-  typo_check?: TypoCheck | null
-  note?: string
-}
-
-function colorFor(val: number, thresholds: [number, number]) {
-  if (val <= thresholds[0]) return 'bg-emerald-500'
-  if (val <= thresholds[1]) return 'bg-amber-400'
-  return 'bg-red-500'
-}
-
-function badgeFor(val: number, thresholds: [number, number]) {
-  if (val <= thresholds[0]) return 'text-emerald-700 bg-emerald-50 border-emerald-200'
-  if (val <= thresholds[1]) return 'text-amber-700 bg-amber-50 border-amber-200'
-  return 'text-red-700 bg-red-50 border-red-200'
-}
-
-function DocumentPicker() {
-  const router = useRouter()
-  const [docs, setDocs] = useState<Document[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    api.getDocuments()
-      .then(res => setDocs((res.data || []).filter((d: Document) => d.parse_status === 'done')))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
-
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
-  return (
-    <div className="max-w-2xl mx-auto px-6 py-10">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">🔍 Cek Kesamaan & Typo</h1>
-        <p className="text-gray-500 mt-1">Pilih dokumen untuk mengecek kemiripan teks dan deteksi typo.</p>
-      </div>
-      {docs.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
-          <div className="text-4xl mb-3">📂</div>
-          <p className="text-gray-600 font-medium">Belum ada dokumen yang siap</p>
-          <p className="text-sm text-gray-400 mt-1 mb-5">Upload dan proses dokumen terlebih dahulu.</p>
-          <Link href="/documents" className="inline-flex items-center gap-1.5 bg-amber-500 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors">
-            + Upload Dokumen
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {docs.map((doc, i) => (
-            <motion.button
-              key={doc.id}
-              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-              onClick={() => router.push(`/similarity?doc=${doc.id}`)}
-              className="w-full text-left bg-white border border-gray-200 hover:border-amber-300 hover:bg-amber-50/30 rounded-xl px-5 py-4 transition-all group"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-xl">📄</span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900 truncate">{doc.title || doc.file_name}</p>
-                  {doc.title && <p className="text-xs text-gray-400 truncate mt-0.5">{doc.file_name}</p>}
-                </div>
-                <span className="text-amber-400 group-hover:text-amber-600 transition-colors flex-shrink-0">→</span>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SimilarityContent() {
-  const searchParams = useSearchParams()
-  const docId = searchParams.get('doc')
-
-  const [checks, setChecks] = useState<SimilarityCheck[]>([])
-  const [selected, setSelected] = useState<SimilarityCheck | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [checking, setChecking] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!docId) { setLoading(false); return }
-    loadChecks()
-  }, [docId])
-
-  async function loadChecks() {
-    setLoading(true)
-    try {
-      const res = await api.getSimilarityChecks()
-      const data: SimilarityCheck[] = (res.data || []).filter((c: SimilarityCheck) => c.document_id === docId)
-      setChecks(data)
-      if (data.length > 0) setSelected(data[0])
-    } catch {
-      setError('Gagal memuat data.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function runCheck() {
-    if (!docId) return
-    setChecking(true)
-    setError(null)
-    try {
-      await api.checkSimilarity(docId)
-      await loadChecks()
-    } catch (e: any) {
-      setError(e.message || 'Gagal menjalankan pengecekan.')
-    } finally {
-      setChecking(false)
-    }
-  }
-
-  if (!docId && !loading) return <DocumentPicker />
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
-  return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">🔍 Cek Kesamaan & Typo</h1>
-          <p className="text-gray-500 mt-1 text-sm">Estimasi kemiripan teks dan deteksi typo</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/similarity" className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 px-3 py-2 rounded-lg transition-colors">
-            ← Pilih Dokumen
-          </Link>
-          <button
-            onClick={runCheck}
-            disabled={checking}
-            className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            {checking ? '⏳ Memeriksa...' : '🔍 Cek Sekarang'}
-          </button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">{error}</div>
-      )}
-
-      {checks.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
-          <div className="text-4xl mb-3">🔍</div>
-          <p className="text-gray-600 font-medium">Belum ada hasil pengecekan</p>
-          <p className="text-sm text-gray-400 mt-1 mb-5">Klik "Cek Sekarang" untuk mulai.</p>
-          <button
-            onClick={runCheck}
-            disabled={checking}
-            className="inline-flex items-center gap-1.5 bg-amber-500 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-amber-600 disabled:opacity-50 transition-colors"
-          >
-            {checking ? '⏳ Memeriksa...' : '🔍 Mulai Pengecekan'}
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-
-          {checks.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {checks.map((c, i) => (
-                <button key={c.id} onClick={() => setSelected(c)}
-                  className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-                    selected?.id === c.id ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-gray-600 border-gray-200 hover:border-amber-300'
-                  }`}
-                >
-                  Cek #{i + 1} · {new Date(c.created_at).toLocaleDateString('id-ID')}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {selected && (
-            <>
-              {/* Overview */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm text-center">
-                  <p className={`text-5xl font-bold ${
-                    (selected.overall_ai_percentage ?? 0) <= 30 ? 'text-emerald-600' :
-                    (selected.overall_ai_percentage ?? 0) <= 70 ? 'text-amber-500' : 'text-red-500'
-                  }`}>
-                    {selected.overall_ai_percentage != null ? `${selected.overall_ai_percentage.toFixed(1)}%` : '—'}
-                  </p>
-                  <p className="mt-1.5 text-sm text-gray-500">Persentase AI Keseluruhan</p>
-                  {selected.summary && (
-                    <p className="text-xs text-gray-400 mt-2">{selected.summary}</p>
-                  )}
-                </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm text-center">
-                  <p className={`text-5xl font-bold ${
-                    !selected.typo_check ? 'text-gray-400' :
-                    selected.typo_check.total_typos_detected === 0 ? 'text-emerald-600' :
-                    selected.typo_check.total_typos_detected <= 10 ? 'text-amber-500' : 'text-red-500'
-                  }`}>
-                    {selected.typo_check != null ? selected.typo_check.total_typos_detected : '—'}
-                  </p>
-                  <p className="mt-1.5 text-sm text-gray-500">Typo Terdeteksi</p>
-                  {selected.typo_check && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      {selected.typo_check.typo_categories.spelling_errors} ejaan · {selected.typo_check.typo_categories.grammatical_errors} grammar · {selected.typo_check.typo_categories.punctuation_errors} tanda baca
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Note/Disclaimer */}
-              {selected.note && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-700">
-                  ⚠️ {selected.note}
-                </div>
-              )}
-
-              {/* Per-chapter AI detection breakdown */}
-              {selected.per_chapter && selected.per_chapter.length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-100">
-                    <h2 className="font-semibold text-gray-900">Deteksi Tulisan AI Per Bab</h2>
-                  </div>
-                  <div className="divide-y divide-gray-50">
-                    {selected.per_chapter.map((ch, i) => (
-                      <details key={i} className="group">
-                        <summary className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors list-none">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm font-medium text-gray-800">{ch.bab}</span>
-                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeFor(ch.ai_percentage, [30, 70])}`}>
-                                {ch.ai_percentage.toFixed(1)}% AI
-                              </span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                ch.confidence === 'high' ? 'bg-red-50 text-red-600' :
-                                ch.confidence === 'medium' ? 'bg-amber-50 text-amber-600' :
-                                'bg-gray-50 text-gray-600'
-                              }`}>
-                                {ch.confidence}
-                              </span>
-                            </div>
-                            <span className="text-xs text-gray-400">{ch.ai_sentences_count} dari {ch.total_sentences} kalimat</span>
-                          </div>
-                          <div className="bg-gray-100 rounded-full h-1.5 overflow-hidden mt-2">
-                            <div className={`h-full rounded-full ${colorFor(ch.ai_percentage, [30, 70])}`} style={{ width: `${ch.ai_percentage}%` }} />
-                          </div>
-                        </summary>
-                        <div className="px-6 py-4 bg-gray-50 space-y-3">
-                          {/* Indicators */}
-                          {ch.indicators.length > 0 && (
-                            <div>
-                              <h4 className="text-xs font-semibold text-gray-700 mb-2">🚨 Indikator AI:</h4>
-                              <ul className="space-y-1">
-                                {ch.indicators.map((ind, j) => (
-                                  <li key={j} className="text-xs text-gray-600 flex items-start gap-2">
-                                    <span className="text-red-500 mt-0.5">•</span>
-                                    <span>{ind}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {/* AI Sentences */}
-                          {ch.ai_sentences.length > 0 && (
-                            <div>
-                              <h4 className="text-xs font-semibold text-gray-700 mb-2">📝 Kalimat Terdeteksi AI ({ch.ai_sentences.length}):</h4>
-                              <div className="space-y-2">
-                                {ch.ai_sentences.map((sentence, j) => (
-                                  <div key={j} className="bg-red-50 border border-red-200 rounded-lg p-3">
-                                    <p className="text-xs text-gray-700 leading-relaxed">{sentence}</p>
-                                    <button
-                                      onClick={() => navigator.clipboard.writeText(sentence)}
-                                      className="text-xs text-red-600 hover:text-red-700 mt-1.5 font-medium"
-                                    >
-                                      📋 Copy
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </details>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Typo report */}
-              {selected.typo_check && selected.typo_check.typos_with_location.length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h2 className="font-semibold text-gray-900">✏️ Daftar Typo</h2>
-                    <span className="text-xs text-gray-400">{selected.typo_check.total_typos_detected} kesalahan</span>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-100 text-xs text-gray-500 text-left">
-                          <th className="px-6 py-3 font-medium">Kategori</th>
-                          <th className="px-4 py-3 font-medium">Typo</th>
-                          <th className="px-4 py-3 font-medium">Koreksi</th>
-                          <th className="px-4 py-3 font-medium">Hal.</th>
-                          <th className="px-4 py-3 font-medium">Baris</th>
-                          <th className="px-4 py-3 font-medium">Konteks</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
-                        {selected.typo_check.typos_with_location.map((t, i) => (
-                          <tr key={i} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-3">
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                t.category === 'spelling' ? 'bg-red-50 text-red-600' :
-                                t.category === 'grammatical' ? 'bg-amber-50 text-amber-600' :
-                                'bg-blue-50 text-blue-600'
-                              }`}>
-                                {t.category}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 font-medium text-red-600 line-through">{t.typo}</td>
-                            <td className="px-4 py-3 text-emerald-700 font-medium">{t.correction}</td>
-                            <td className="px-4 py-3 text-gray-500">{t.page}</td>
-                            <td className="px-4 py-3 text-gray-500">{t.line}</td>
-                            <td className="px-4 py-3 text-gray-400 text-xs max-w-xs truncate" title={t.context}>{t.context}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {selected.status === 'processing' && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700 text-center">
-                  ⏳ Pengecekan sedang diproses oleh AI.
-                </div>
-              )}
-
-              <p className="text-xs text-gray-400 text-center">
-                ⚠️ Hasil deteksi tulisan AI merupakan estimasi berbasis model bahasa (LLM). Bukan bukti mutlak plagiarisme atau penggunaan AI. Gunakan sebagai referensi awal untuk review manual.
-              </p>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  )
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr)
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
 }
 
 export default function SimilarityPage() {
+  const [selectedDoc, setSelectedDoc] = useState<string>('')
+
+  const filteredChecks = selectedDoc
+    ? DUMMY_CHECKS.filter((c) => c.document === DUMMY_DOCUMENTS.find((d) => d.id === selectedDoc)?.title)
+    : DUMMY_CHECKS
+
   return (
-    <Suspense fallback={<div className="text-gray-400 p-8">Loading...</div>}>
-      <SimilarityContent />
-    </Suspense>
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        >
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <span>🔍</span>
+              Cek Tulisan AI & Typo
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Deteksi indikasi tulisan AI per bab + identifikasi typo dengan lokasi spesifik
+            </p>
+          </div>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Kembali ke Dashboard
+          </Link>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Document Selector */}
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="lg:col-span-1"
+          >
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">📂 Pilih Dokumen</h2>
+              <div className="space-y-3">
+                {DUMMY_DOCUMENTS.map((doc) => (
+                  <button
+                    key={doc.id}
+                    onClick={() => setSelectedDoc(doc.id)}
+                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                      selectedDoc === doc.id
+                        ? 'border-amber-500 bg-amber-50 shadow-sm'
+                        : 'border-gray-200 hover:border-amber-300 hover:bg-amber-50/50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl flex-shrink-0">📄</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{doc.title}</p>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              doc.type === 'proposal'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-purple-100 text-purple-700'
+                            }`}
+                          >
+                            {doc.type === 'proposal' ? 'Proposal' : 'Laporan'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {selectedDoc && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6"
+                >
+                  <button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                    <span>🔍</span>
+                    Cek Sekarang
+                  </button>
+                  <p className="text-xs text-center text-gray-500 mt-2">
+                    Gunakan <strong>1 kredit Kesamaan</strong>
+                  </p>
+                </motion.div>
+              )}
+
+              {!selectedDoc && (
+                <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                  <p className="text-xs text-amber-700 text-center">
+                    💡 Pilih dokumen untuk cek tulisan AI & typo
+                  </p>
+                </div>
+              )}
+
+              {/* Info Card */}
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <p className="text-xs font-semibold text-blue-900 mb-2">ℹ️ Yang Dicek:</p>
+                <ul className="text-xs text-blue-800 space-y-1">
+                  <li>• % AI per bab (transparan)</li>
+                  <li>• Kalimat terdeteksi AI</li>
+                  <li>• Typo: spelling, grammar, punctuation</li>
+                  <li>• Lokasi: halaman + baris</li>
+                </ul>
+              </div>
+
+              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                <p className="text-xs text-amber-800">
+                  ⚠️ <strong>Disclaimer:</strong> Hasil deteksi AI adalah estimasi berbasis LLM, bukan bukti mutlak.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Right: History Table */}
+          <motion.div
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="lg:col-span-2"
+          >
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-bold text-gray-900">📊 Riwayat Pengecekan</h2>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {filteredChecks.length} pengecekan tersimpan{' '}
+                  {selectedDoc && `untuk dokumen terpilih`}
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                {filteredChecks.length === 0 ? (
+                  <div className="px-6 py-16 text-center">
+                    <span className="text-6xl block mb-4">🔍</span>
+                    <p className="text-gray-600 font-medium mb-2">Belum ada riwayat pengecekan</p>
+                    <p className="text-sm text-gray-500">
+                      {selectedDoc
+                        ? 'Dokumen ini belum pernah dicek'
+                        : 'Pilih dokumen dan mulai pengecekan pertamamu'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {filteredChecks.map((check) => (
+                      <div key={check.id} className="p-6 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 mb-2">{check.document}</h3>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                              {formatDate(check.date)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Stats Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                          {/* AI Percentage */}
+                          <div
+                            className={`rounded-lg p-4 border-2 ${
+                              check.ai_percentage <= 15
+                                ? 'bg-emerald-50 border-emerald-200'
+                                : check.ai_percentage <= 30
+                                ? 'bg-amber-50 border-amber-200'
+                                : 'bg-red-50 border-red-200'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-xs font-semibold text-gray-600">% AI Overall</p>
+                              {check.trend === 'down' && (
+                                <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              )}
+                              {check.trend === 'up' && (
+                                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                            <p
+                              className={`text-3xl font-black ${
+                                check.ai_percentage <= 15
+                                  ? 'text-emerald-600'
+                                  : check.ai_percentage <= 30
+                                  ? 'text-amber-600'
+                                  : 'text-red-600'
+                              }`}
+                            >
+                              {check.ai_percentage}%
+                            </p>
+                          </div>
+
+                          {/* Total Typos */}
+                          <div
+                            className={`rounded-lg p-4 border-2 ${
+                              check.total_typos === 0
+                                ? 'bg-emerald-50 border-emerald-200'
+                                : check.total_typos <= 10
+                                ? 'bg-amber-50 border-amber-200'
+                                : 'bg-red-50 border-red-200'
+                            }`}
+                          >
+                            <p className="text-xs font-semibold text-gray-600 mb-1">Total Typo</p>
+                            <p
+                              className={`text-3xl font-black ${
+                                check.total_typos === 0
+                                  ? 'text-emerald-600'
+                                  : check.total_typos <= 10
+                                  ? 'text-amber-600'
+                                  : 'text-red-600'
+                              }`}
+                            >
+                              {check.total_typos}
+                            </p>
+                          </div>
+
+                          {/* Highest Chapter */}
+                          <div className="rounded-lg p-4 border-2 bg-blue-50 border-blue-200">
+                            <p className="text-xs font-semibold text-blue-900 mb-1">Bab Tertinggi AI</p>
+                            <p className="text-sm font-bold text-blue-700">{check.highest_chapter}</p>
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-700 leading-relaxed">{check.summary}</p>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button className="text-sm font-semibold text-amber-600 hover:text-amber-700 px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-colors">
+                            📄 Lihat Detail Per Bab
+                          </button>
+                          <button className="text-sm font-semibold text-gray-600 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                            📋 Daftar Typo Lengkap
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </div>
   )
 }

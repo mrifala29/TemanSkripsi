@@ -1,236 +1,297 @@
 'use client'
 
-import { useState, useEffect, useRef, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { api } from '@/lib/api'
 
-type Message = {
-  id: string
-  role: 'ai' | 'user'
-  content: string
-  turn_index: number
-}
+// DUMMY DATA
+const DUMMY_DOCUMENTS = [
+  {
+    id: '1',
+    title: 'Proposal Penelitian - Metode Pembelajaran Matematika',
+    file_name: 'proposal-matematika.pdf',
+    type: 'proposal',
+    status: 'done',
+  },
+  {
+    id: '2',
+    title: 'Laporan Akhir Skripsi - Pengaruh Media Digital',
+    file_name: 'laporan-akhir.pdf',
+    type: 'final_report',
+    status: 'done',
+  },
+  {
+    id: '4',
+    title: 'Revisi Proposal Setelah Bimbingan',
+    file_name: 'revisi-proposal-v2.pdf',
+    type: 'proposal',
+    status: 'done',
+  },
+]
 
-type Document = {
-  id: string
-  file_name: string
-  title: string | null
-  parse_status: string
-}
+const DUMMY_SESSIONS = [
+  {
+    id: '1',
+    document: 'Proposal Penelitian - Metode Pembelajaran Matematika',
+    type: 'Sempro',
+    date: '2026-06-06T15:30:00Z',
+    duration: '35 menit',
+    qa_count: 8,
+    evaluation: 'Baik',
+    summary: '8 pertanyaan dijawab dengan lancar. Metodologi jelas, latar belakang kuat.',
+  },
+  {
+    id: '2',
+    document: 'Laporan Akhir Skripsi - Pengaruh Media Digital',
+    type: 'Sidang',
+    date: '2026-06-02T10:00:00Z',
+    duration: '52 menit',
+    qa_count: 12,
+    evaluation: 'Cukup',
+    summary: '12 pertanyaan diajukan. Beberapa jawaban perlu pendalaman, terutama di BAB IV.',
+  },
+  {
+    id: '3',
+    document: 'Revisi Proposal Setelah Bimbingan',
+    type: 'Sempro',
+    date: '2026-05-28T14:15:00Z',
+    duration: '28 menit',
+    qa_count: 7,
+    evaluation: 'Baik',
+    summary: 'Revisi sudah sesuai saran dosen. Pertanyaan fokus pada timeline penelitian.',
+  },
+]
 
-function DocumentPicker() {
-  const router = useRouter()
-  const [docs, setDocs] = useState<Document[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    api.getDocuments()
-      .then(res => setDocs((res.data || []).filter((d: Document) => d.parse_status === 'done')))
-      .catch(() => setError('Gagal memuat dokumen.'))
-      .finally(() => setLoading(false))
-  }, [])
-
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
-  return (
-    <div className="max-w-2xl mx-auto px-6 py-10">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">🎤 Simulasi Sidang</h1>
-        <p className="text-gray-500 mt-1">Pilih dokumen untuk memulai sesi simulasi dengan AI dosen penguji.</p>
-      </div>
-
-      {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">{error}</div>
-      )}
-
-      {docs.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
-          <div className="text-4xl mb-3">📂</div>
-          <p className="text-gray-600 font-medium">Belum ada dokumen yang siap</p>
-          <p className="text-sm text-gray-400 mt-1 mb-5">Upload dan proses dokumen skripsimu terlebih dahulu.</p>
-          <Link href="/documents" className="inline-flex items-center gap-1.5 bg-indigo-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-            + Upload Dokumen
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {docs.map((doc, i) => (
-            <motion.button
-              key={doc.id}
-              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-              onClick={() => router.push(`/sessions?doc=${doc.id}`)}
-              className="w-full text-left bg-white border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30 rounded-xl px-5 py-4 transition-all group"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-xl flex-shrink-0">📄</span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900 truncate">{doc.title || doc.file_name}</p>
-                  {doc.title && <p className="text-xs text-gray-400 truncate mt-0.5">{doc.file_name}</p>}
-                </div>
-                <span className="text-indigo-400 group-hover:text-indigo-600 transition-colors flex-shrink-0">→</span>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ChatSession() {
-  const searchParams = useSearchParams()
-  const docId = searchParams.get('doc')
-  const sessionId = searchParams.get('session')
-
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [currentSession, setCurrentSession] = useState<string | null>(sessionId)
-  const [starting, setStarting] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  async function startSession() {
-    if (!docId) return
-    setStarting(true)
-    try {
-      const res = await api.createSession({ document_id: docId })
-      const sid = res.data?.id || res.id
-      setCurrentSession(sid)
-      const msgRes = await api.getMessages(sid)
-      setMessages(msgRes.data || [])
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setStarting(false)
-    }
-  }
-
-  async function sendMessage() {
-    if (!input.trim() || !currentSession || loading) return
-    const userMsg = input.trim()
-    setInput('')
-    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: userMsg, turn_index: prev.length + 1 }])
-    setLoading(true)
-    try {
-      const res = await api.sendMessage(currentSession, userMsg)
-      const aiMsg = res.data?.ai_message || res.ai_message
-      if (aiMsg) {
-        setMessages(prev => [...prev, { id: aiMsg.id || Date.now().toString() + '_ai', role: 'ai', content: aiMsg.content, turn_index: aiMsg.turn_index }])
-      }
-    } catch {
-      setMessages(prev => [...prev, { id: Date.now().toString() + '_err', role: 'ai', content: '⚠️ Maaf, terjadi error. Coba lagi.', turn_index: 0 }])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // No docId → show document picker
-  if (!docId) return <DocumentPicker />
-
-  // Has docId but no session → start prompt
-  if (!currentSession) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
-        <div className="text-5xl mb-4">🎤</div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Simulasi Sidang</h1>
-        <p className="text-gray-500 mb-8 max-w-md">
-          AI akan bertindak sebagai dosen penguji yang kritis. Jawab setiap pertanyaan sebaik mungkin.
-        </p>
-        <div className="flex gap-3">
-          <Link href="/sessions" className="px-5 py-2.5 rounded-xl text-sm text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors">
-            ← Pilih Dokumen Lain
-          </Link>
-          <button
-            onClick={startSession}
-            disabled={starting}
-            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-8 py-2.5 rounded-xl font-semibold text-sm transition-colors"
-          >
-            {starting ? 'Mempersiapkan...' : '🚀 Mulai Simulasi'}
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="max-w-4xl mx-auto px-6 py-6 flex flex-col h-[calc(100vh-80px)]">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-lg font-bold text-gray-900">🎤 Simulasi Sidang</h1>
-          <p className="text-xs text-gray-400">Session: {currentSession.slice(0, 8)}...</p>
-        </div>
-        <Link href="/sessions" className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors">
-          ← Dokumen Lain
-        </Link>
-      </div>
-
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-        {messages.length === 0 && (
-          <div className="text-center text-gray-400 py-12">
-            <p>Menunggu AI memulai pertanyaan pertama...</p>
-          </div>
-        )}
-        {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-              msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-800 border border-gray-200'
-            }`}>
-              {msg.role === 'ai' && <p className="text-xs text-gray-400 mb-1">🎓 Dosen Penguji</p>}
-              <p className="whitespace-pre-wrap">{msg.content}</p>
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3">
-              <p className="text-xs text-gray-400 mb-1">🎓 Dosen Penguji</p>
-              <div className="flex gap-1">
-                {[0, 150, 300].map(d => (
-                  <span key={d} className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
-
-      <div className="flex gap-3">
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-          placeholder="Ketik jawaban kamu..."
-          disabled={loading}
-          className="flex-1 bg-white border border-gray-200 focus:border-indigo-500 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors"
-        />
-        <button
-          onClick={sendMessage}
-          disabled={loading || !input.trim()}
-          className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-3 rounded-xl font-medium text-sm transition-colors"
-        >
-          Kirim
-        </button>
-      </div>
-    </div>
-  )
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr)
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
 }
 
 export default function SessionsPage() {
+  const [selectedDoc, setSelectedDoc] = useState<string>('')
+
+  const filteredSessions = selectedDoc
+    ? DUMMY_SESSIONS.filter((s) => s.document === DUMMY_DOCUMENTS.find((d) => d.id === selectedDoc)?.title)
+    : DUMMY_SESSIONS
+
   return (
-    <Suspense fallback={<div className="text-gray-400 p-8">Loading...</div>}>
-      <ChatSession />
-    </Suspense>
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        >
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <span>🎤</span>
+              Simulasi Sidang
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Latihan sidang dengan AI dosen penguji - Sempro & Sidang Akhir
+            </p>
+          </div>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Kembali ke Dashboard
+          </Link>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Document Selector */}
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="lg:col-span-1"
+          >
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">📂 Pilih Dokumen</h2>
+              <div className="space-y-3">
+                {DUMMY_DOCUMENTS.map((doc) => (
+                  <button
+                    key={doc.id}
+                    onClick={() => setSelectedDoc(doc.id)}
+                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                      selectedDoc === doc.id
+                        ? 'border-purple-500 bg-purple-50 shadow-sm'
+                        : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl flex-shrink-0">📄</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{doc.title}</p>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              doc.type === 'proposal'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-purple-100 text-purple-700'
+                            }`}
+                          >
+                            {doc.type === 'proposal' ? 'Proposal' : 'Laporan'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {selectedDoc && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6"
+                >
+                  <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                    <span>🚀</span>
+                    Mulai Simulasi Baru
+                  </button>
+                  <p className="text-xs text-center text-gray-500 mt-2">
+                    Gunakan <strong>1 kredit Sempro/Sidang</strong>
+                  </p>
+                </motion.div>
+              )}
+
+              {!selectedDoc && (
+                <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                  <p className="text-xs text-amber-700 text-center">
+                    💡 Pilih dokumen untuk mulai simulasi
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Right: History Table */}
+          <motion.div
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="lg:col-span-2"
+          >
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-bold text-gray-900">📊 Riwayat Simulasi</h2>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {filteredSessions.length} sesi simulasi{' '}
+                  {selectedDoc && `untuk dokumen terpilih`}
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                {filteredSessions.length === 0 ? (
+                  <div className="px-6 py-16 text-center">
+                    <span className="text-6xl block mb-4">🎤</span>
+                    <p className="text-gray-600 font-medium mb-2">Belum ada riwayat simulasi</p>
+                    <p className="text-sm text-gray-500">
+                      {selectedDoc
+                        ? 'Dokumen ini belum pernah disimulasikan'
+                        : 'Pilih dokumen dan mulai simulasi pertamamu'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {filteredSessions.map((session) => (
+                      <div key={session.id} className="p-6 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-gray-900">{session.document}</h3>
+                              <span
+                                className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  session.type === 'Sempro'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-indigo-100 text-indigo-700'
+                                }`}
+                              >
+                                {session.type}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
+                                </svg>
+                                {session.duration}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                                  />
+                                </svg>
+                                {session.qa_count} tanya-jawab
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                                {formatDate(session.date)}
+                              </span>
+                            </div>
+                          </div>
+                          <span
+                            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold ${
+                              session.evaluation === 'Baik'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : session.evaluation === 'Cukup'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {session.evaluation}
+                          </span>
+                        </div>
+
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-700 leading-relaxed">{session.summary}</p>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button className="text-sm font-semibold text-purple-600 hover:text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-50 transition-colors">
+                            📄 Lihat Transkrip
+                          </button>
+                          <button className="text-sm font-semibold text-gray-600 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                            🔄 Ulangi Simulasi
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </div>
   )
 }
